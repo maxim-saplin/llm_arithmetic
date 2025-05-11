@@ -2,7 +2,7 @@ import re
 from decimal import Decimal
 
 # Regex to extract the last number in the response
-NUMBER_REGEX = re.compile(r"(-?\d+(?:\.\d+)?)\s*$")
+NUMBER_REGEX = re.compile(r"(-?\d+(?:\.\d*)?)\s*$")
 
 
 def parse_response(raw: str, correct, variant: str):
@@ -16,11 +16,13 @@ def parse_response(raw: str, correct, variant: str):
     num_str = match.group(1)
     try:
         if variant.startswith("int"):
-            parsed = int(num_str)
+            # accept float-formatted ints (e.g. "15.0", "15.")
+            parsed_decimal = Decimal(num_str)
+            parsed = int(parsed_decimal)
             error = parsed - correct
         else:
             parsed = Decimal(num_str)
-            parsed = parsed.quantize(Decimal("0.00"))
+            parsed = parsed.quantize(Decimal("0.0000"))
             error = parsed - correct
         if parsed == correct:
             return parsed, "Correct", None
@@ -29,7 +31,7 @@ def parse_response(raw: str, correct, variant: str):
         if variant.startswith("int"):
             error_out = error_val
         else:
-            error_out = error_val.quantize(Decimal("0.00"))
+            error_out = error_val.quantize(Decimal("0.0000"))
         return parsed, "Deviate", str(error_out)
     except Exception:
         return None, "NaN", None 

@@ -66,9 +66,10 @@ def compute_correct(variant: str, lhs, rhs):
         if variant.endswith("sub"):
             return lhs - rhs
         if variant.endswith("mul"):
-            return lhs * rhs
+            result = lhs * rhs
+            return result.quantize(Decimal("0.0000"))
         if variant.endswith("div"):
             result = lhs / rhs
-            # quantize to two decimal places
-            return result.quantize(Decimal("0.00"))
+            # quantize to four decimal places
+            return result.quantize(Decimal("0.0000"))
     raise ValueError(f"Unknown variant: {variant}") 
