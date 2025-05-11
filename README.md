@@ -1,9 +1,17 @@
 # llm_arithmetic
 
-A Python harness to evaluate Large Language Models (LLMs) on basic arithmetic operations (addition, subtraction, multiplication, division) across varying numeric depths (number of difits in numbers) and data types (integer, fixed-point denotaed as float). E.g.:
+A Python harness to evaluate Large Language Models (LLMs) on basic arithmetic operations (addition, subtraction, multiplication, division) across varying numeric depths (number of difits in numbers) and data types (integer, fixed-point denotaed as float). 
+
+E.g. integer at depth 2:
 ```
 Compute the following and reply with just the numeric result (no explanation):
    23 + 48
+```
+
+E.g. float at depth 5:
+```
+Compute the following and reply with just the numeric result (no explanation):
+   82248.19 * 96362.66
 ```
 
 ## Features
