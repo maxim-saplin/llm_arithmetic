@@ -1,3 +1,4 @@
 litellm 
 python-dotenv 
 tqdm 
+rich 
