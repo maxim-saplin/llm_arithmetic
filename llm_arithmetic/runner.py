@@ -160,14 +160,13 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str):
 
     pbar.close()
 
-    # Compute aggregated metrics
+    # Compute aggregated metrics per depth cell
     formatted_cells = {}
     for variant in types.VARIANTS:
         formatted_cells[variant] = {}
         for depth in depths:
             key = f"depth_{depth}"
             cell = stats[variant][key]
-            # Compute averages
             total = cell['total_trials']
             dev_count = cell['deviate_count']
             avg_error = (cell['error_sum'] / dev_count) if dev_count > 0 else Decimal("0.00")
@@ -178,6 +177,9 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str):
                 'correct_count': cell['correct_count'],
                 'nan_count': cell['nan_count'],
                 'deviate_count': dev_count,
+                'accuracy': cell['correct_count'] / total if total > 0 else 0.0,
+                'nan_rate': cell['nan_count'] / total if total > 0 else 0.0,
+                'deviate_rate': dev_count / total if total > 0 else 0.0,
                 'avg_error': str(avg_error.quantize(Decimal("0.00"))),
                 'avg_prompt_tokens': avg_prompt,
                 'avg_completion_tokens': avg_completion,
@@ -186,15 +188,21 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str):
             }
 
     # Compute model-level overall summary
+    total_trials = total_tasks
     overall = {
+        'total_trials': total_trials,
         'total_prompt_tokens': total_prompt_tokens,
         'total_completion_tokens': total_completion_tokens,
         'total_cost': total_cost,
         'correct_count': global_correct,
         'nan_count': global_nan,
         'deviate_count': global_deviate,
+        'accuracy': global_correct / total_trials if total_trials > 0 else 0.0,
+        'nan_rate': global_nan / total_trials if total_trials > 0 else 0.0,
+        'deviate_rate': global_deviate / total_trials if total_trials > 0 else 0.0,
         'avg_error': str((global_error_sum / global_deviate).quantize(Decimal("0.00"))) if global_deviate > 0 else "0.00"
     }
+
     # Compute per-category (variant) aggregates across depths
     per_category = {}
     for variant in types.VARIANTS:
@@ -207,13 +215,19 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str):
         nan_sum = sum(var_stats[f"depth_{d}"]['nan_count'] for d in depths)
         dev_sum = sum(var_stats[f"depth_{d}"]['deviate_count'] for d in depths)
         error_sum = sum(var_stats[f"depth_{d}"]['error_sum'] for d in depths)
+        # total trials for this variant across all depths
+        var_total_trials = sum(var_stats[f"depth_{d}"]['total_trials'] for d in depths)
         per_category[variant] = {
+            'total_trials': var_total_trials,
             'total_prompt_tokens': prompt_sum,
             'total_completion_tokens': completion_sum,
             'total_cost': cost_sum,
             'correct_count': correct_sum,
             'nan_count': nan_sum,
             'deviate_count': dev_sum,
+            'accuracy': correct_sum / var_total_trials if var_total_trials > 0 else 0.0,
+            'nan_rate': nan_sum / var_total_trials if var_total_trials > 0 else 0.0,
+            'deviate_rate': dev_sum / var_total_trials if var_total_trials > 0 else 0.0,
             'avg_error': str((error_sum / dev_sum).quantize(Decimal("0.00"))) if dev_sum > 0 else "0.00"
         }
     # Build aggregate record and append to a single aggregate.jsonl at project root
