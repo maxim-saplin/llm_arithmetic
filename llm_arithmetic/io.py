@@ -21,10 +21,11 @@ def write_trial(trial: Trial, path: str):
             "prompt_tokens": trial.prompt_tokens,
             "completion_tokens": trial.completion_tokens
         },
+        "cost": trial.cost,
         "timestamp": trial.timestamp
     }
     with open(path, "a") as f:
-        f.write(json.dumps(record) + "\n")
+        f.write(json.dumps(record, default=str) + "\n")
 
 
 def write_aggregate(aggregate: Aggregate, path: str):
@@ -38,4 +39,4 @@ def write_aggregate(aggregate: Aggregate, path: str):
         "cells": aggregate.cells
     }
     with open(path, "a") as f:
-        f.write(json.dumps(record) + "\n") 
+        f.write(json.dumps(record, default=str) + "\n") 

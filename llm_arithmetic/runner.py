@@ -1,5 +1,7 @@
 import os
 from datetime import datetime
+import csv
+
 def run(model: str, trials_per_cell: int, depths, output_dir: str):
     """
     Execute the evaluation for the specified model, number of trials per cell, and digit depths.
@@ -10,9 +12,32 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str):
     from decimal import Decimal
     from litellm import completion
     from llm_arithmetic import gen, prompt, parse, types, io as io_
+    from tqdm import tqdm
 
     # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)
+
+    # Load pricing metadata
+    metadata_file = os.path.join(os.getcwd(), "models_metadata.csv")
+    model_prices = {}
+    try:
+        with open(metadata_file) as mf:
+            reader = csv.DictReader(mf)
+            for row in reader:
+                m = row['model']
+                try:
+                    p_prompt = float(row['1m_prompt'])
+                except:
+                    p_prompt = 0.0
+                try:
+                    p_completion = float(row['1m_completion'])
+                except:
+                    p_completion = 0.0
+                model_prices[m] = (p_prompt, p_completion)
+    except FileNotFoundError:
+        model_prices = {}
+    # Pricing for this model
+    prompt_price_per_m, completion_price_per_m = model_prices.get(model, (0.0, 0.0))
 
     # Prepare file paths and stats container
     date = datetime.utcnow().strftime("%Y-%m-%d")
@@ -31,8 +56,17 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str):
                 "deviate_count": 0,
                 "error_sum": Decimal("0.00"),
                 "prompt_tokens_sum": 0,
-                "completion_tokens_sum": 0
+                "completion_tokens_sum": 0,
+                "cost_sum": 0.0
             }
+
+    # Setup progress bar
+    total_tasks = len(types.VARIANTS) * len(depths) * trials_per_cell
+    # Initialize accumulated token counters
+    total_prompt_tokens = 0
+    total_completion_tokens = 0
+    total_cost = 0.0
+    pbar = tqdm(total=total_tasks, desc=f"Model: {model}", unit="trial")
 
     # Run trials
     for variant in types.VARIANTS:
@@ -59,6 +93,8 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str):
                 usage = getattr(response, 'usage', {})
                 prompt_tokens = usage.get('prompt_tokens', 0)
                 completion_tokens = usage.get('completion_tokens', 0)
+                # Compute cost for this trial
+                cost = (prompt_tokens / 1_000_000) * prompt_price_per_m + (completion_tokens / 1_000_000) * completion_price_per_m
                 # Extract model output
                 raw = None
                 try:
@@ -82,6 +118,7 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str):
                     error=error,
                     prompt_tokens=prompt_tokens,
                     completion_tokens=completion_tokens,
+                    cost=cost,
                     timestamp=timestamp
                 )
                 io_.write_trial(trial, trial_file)
@@ -97,6 +134,21 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str):
                     cell['error_sum'] += Decimal(error)
                 cell['prompt_tokens_sum'] += prompt_tokens
                 cell['completion_tokens_sum'] += completion_tokens
+                # Update stats cost sum
+                cell['cost_sum'] += cost
+                # Update accumulated token counters and display
+                total_prompt_tokens += prompt_tokens
+                total_completion_tokens += completion_tokens
+                total_cost += cost
+                pbar.set_postfix({
+                    'prompt_tokens': total_prompt_tokens,
+                    'completion_tokens': total_completion_tokens,
+                    'total_tokens': total_prompt_tokens + total_completion_tokens,
+                    'cost': total_cost
+                })
+                pbar.update(1)
+
+    pbar.close()
 
     # Compute aggregated metrics
     formatted_cells = {}
@@ -118,7 +170,9 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str):
                 'deviate_count': dev_count,
                 'avg_error': str(avg_error.quantize(Decimal("0.00"))),
                 'avg_prompt_tokens': avg_prompt,
-                'avg_completion_tokens': avg_completion
+                'avg_completion_tokens': avg_completion,
+                'total_cost': cell['cost_sum'],
+                'avg_cost': (cell['cost_sum'] / total) if total > 0 else 0.0
             }
 
     # Write aggregate to root-level aggregate.jsonl

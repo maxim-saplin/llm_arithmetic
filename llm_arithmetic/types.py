@@ -21,6 +21,7 @@ class Trial:
     error: Any
     prompt_tokens: int
     completion_tokens: int
+    cost: float
     timestamp: str
 
 @dataclass
