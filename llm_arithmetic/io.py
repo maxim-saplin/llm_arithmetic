@@ -36,6 +36,8 @@ def write_aggregate(aggregate: Aggregate, path: str):
         "model": aggregate.model,
         "date": aggregate.date,
         "trials_per_cell": aggregate.trials_per_cell,
+        "overall": aggregate.overall,
+        "per_category": aggregate.per_category,
         "cells": aggregate.cells
     }
     with open(path, "a") as f:

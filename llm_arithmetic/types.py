@@ -29,4 +29,6 @@ class Aggregate:
     model: str
     date: str
     trials_per_cell: int
-    cells: Dict[str, Dict[str, Any]] 
+    cells: Dict[str, Dict[str, Any]]
+    overall: Dict[str, Any]
+    per_category: Dict[str, Dict[str, Any]] 
