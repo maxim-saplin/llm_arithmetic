@@ -2,9 +2,10 @@ import os
 from datetime import datetime
 import csv
 
-def run(model: str, trials_per_cell: int, depths, output_dir: str):
+def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_effort: str = None):
     """
     Execute the evaluation for the specified model, number of trials per cell, and digit depths.
+    :param reasoning_effort: optional reasoning effort level ('low', 'medium', 'high')
 
     Writes per-trial JSONL into output_dir and updates aggregate.jsonl in project root.
     """
@@ -90,10 +91,11 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str):
                 # Build prompt
                 op_symbol = prompt.OP_SYMBOLS[op]
                 ptext = prompt.make_prompt(lhs, op_symbol, rhs)
-                # Call model
+                # Call model with optional reasoning effort
                 response = completion(
                     model=model,
-                    messages=[{"role": "user", "content": ptext}]
+                    messages=[{"role": "user", "content": ptext}],
+                    reasoning_effort=reasoning_effort
                 )
                 # Extract response details
                 usage = getattr(response, 'usage', {})

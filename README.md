@@ -1,16 +1,16 @@
 # llm_arithmetic
 
-A Python harness to evaluate large language models (LLMs) on basic arithmetic operations (addition, subtraction, multiplication, division) across varying numeric depths and data types.
+A Python harness to evaluate Large Language Models (LLMs) on basic arithmetic operations (addition, subtraction, multiplication, division) across varying numeric depths (number of difits in numbers) and data types (integer, fixed-point denotaed as float).
 
 ## Features
 
-- Supports integer and fixed-point float arithmetic
+- Supports integer and fixed-point "float" arithmetic
 - Parametrized digit depths (2 to 10)
 - Generates random test operands with controlled valid inputs (e.g., integer division always yields integer results)
-- Prompts LLMs via `litellm.completion`
+- Prompts LLMs via `litellm`
 - Parses numeric responses with regex
-- Classifies results as `Correct`, `Deviate`, or `NaN`
-- Records token usage and timing
+- Classifies results as `Correct` (exact match), `Deviate`, or `NaN` (not a number in model response)
+- Records token usage and costs
 - Outputs per-trial JSONL and updates an aggregate JSONL summary
 
 ## Testing Rules and Constraints
