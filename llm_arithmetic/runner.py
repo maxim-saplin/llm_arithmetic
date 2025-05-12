@@ -3,10 +3,11 @@ from datetime import datetime, timezone
 import csv
 import time
 
-def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_effort: str = None, resume_file: str = None, retries: int = 3, retry_delay: float = 5.0):
+def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_effort: str = None, resume_file: str = None, retries: int = 3, retry_delay: float = 5.0, model_alias: str = None, litellm_params: dict = None):
     """
     Execute the evaluation for the specified model, number of trials per cell, and digit depths.
     :param reasoning_effort: optional reasoning effort level ('low', 'medium', 'high')
+    :param litellm_params: optional dictionary of parameters to pass directly to litellm.completion
 
     Writes per-trial JSONL into output_dir and updates aggregate.jsonl in project root.
     """
@@ -38,8 +39,13 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
                 model_prices[m] = (p_prompt, p_completion)
     except FileNotFoundError:
         model_prices = {}
-    # Pricing for this model
-    prompt_price_per_m, completion_price_per_m = model_prices.get(model, (0.0, 0.0))
+    # Determine display model for logs and pricing lookup
+    display_model = model_alias if model_alias else model
+    # Pricing based on alias if provided, else actual model
+    if model_alias:
+        prompt_price_per_m, completion_price_per_m = model_prices.get(display_model, model_prices.get(model, (0.0, 0.0)))
+    else:
+        prompt_price_per_m, completion_price_per_m = model_prices.get(model, (0.0, 0.0))
 
     # Prepare file paths and stats container (resume or new)
     date = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M")
@@ -80,7 +86,7 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
     total_prompt_tokens = 0
     total_completion_tokens = 0
     total_cost = 0.0
-    pbar = tqdm(total=total_tasks, desc=f"Model: {model}", unit="trial")
+    pbar = tqdm(total=total_tasks, desc=f"Model: {display_model}", unit="trial")
     # If resuming, pre-load stats and advance progress
     if resume_file and os.path.exists(trial_file):
         # Load existing trial records via I/O module
@@ -148,11 +154,19 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
                 # Call model with optional reasoning effort and retry on failure
                 for attempt in range(retries):
                     try:
-                        response = completion(
-                            model=model,
-                            messages=[{"role": "user", "content": ptext}],
-                            reasoning_effort=reasoning_effort
-                        )
+                        # Prepare completion kwargs
+                        completion_kwargs = {
+                            "model": model,
+                            "messages": [{"role": "user", "content": ptext}]
+                        }
+                        # Add reasoning_effort if specified
+                        if reasoning_effort:
+                            completion_kwargs["reasoning_effort"] = reasoning_effort
+                        # Add any custom litellm parameters
+                        if litellm_params:
+                            completion_kwargs.update(litellm_params)
+                        
+                        response = completion(**completion_kwargs)
                         break
                     except Exception as e:
                         # Log the retry error
@@ -193,7 +207,7 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
                 attempts_taken = attempt + 1
                 # Build trial record and write
                 trial = types.Trial(
-                    model=model,
+                    model=display_model,
                     variant=variant,
                     depth=depth,
                     operands=[lhs, rhs],
@@ -317,7 +331,7 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
         }
     # Build aggregate record and append to a single aggregate.jsonl at project root
     aggregate = types.Aggregate(
-        model=model,
+        model=display_model,
         date=date,
         trials_per_cell=trials_per_cell,
         cells=formatted_cells,

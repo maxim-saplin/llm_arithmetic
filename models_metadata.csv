@@ -85,3 +85,9 @@ grok-3-mini-fast-beta, 0.6, 4.0, 2025-02
 grok-3-beta, 3, 15, 2025-02
 grok-3-fast-beta, 5, 25, 2025-02
 xai/grok-3-mini-beta, 0.3, 0.5, 2025-02
+gemini-2.5-flash-preview-04-17, 0.15, 0.60, 2025-03
+gemini-2.5-flash-preview-04-17-thinking, 0.15, 3.50, 2025-04
+gemini-2.5-pro-preview-05-06, 1.25, 10, 2025-05
+gemini/gemini-2.5-flash-preview-04-17, 0.15, 0.60, 2025-03
+gemini/gemini-2.5-flash-preview-04-17-thinking, 0.15, 3.50, 2025-04
+gemini/gemini-2.5-pro-preview-05-06, 1.25, 10.0, 2025-05
