@@ -55,6 +55,10 @@ def patch_completion(monkeypatch):
     monkeypatch.setattr("litellm.completion", fake_completion)
     yield
 
+@pytest.fixture(autouse=True)
+def isolate_fs(tmp_path, monkeypatch):
+    """Run each test in an isolated temporary directory to avoid writing to project root"""
+    monkeypatch.chdir(tmp_path)
 
 def test_runner_all_variants_positive(tmp_path):
     # Prepare a known trial file path to avoid timestamp unpredictability
