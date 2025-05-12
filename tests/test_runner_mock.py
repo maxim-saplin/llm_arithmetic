@@ -71,7 +71,8 @@ def test_runner_all_variants_positive(tmp_path):
         output_dir=str(tmp_path),
         reasoning_effort=None,
         resume_file=str(trial_file),
-        retries=1
+        retries=1,
+        retry_delay=0.0
     )
     # Read back the trial records
     trials = io_.read_trials(str(trial_file))
@@ -101,7 +102,8 @@ def test_aggregate_file(tmp_path, monkeypatch):
         output_dir=str(tmp_path),
         reasoning_effort=None,
         resume_file=str(trial_file),
-        retries=1
+        retries=1,
+        retry_delay=0.0
     )
     # Verify trials file
     trials = io_.read_trials(str(trial_file))
@@ -177,7 +179,8 @@ def test_runner_retries_on_failure(tmp_path, monkeypatch):
         output_dir=str(tmp_path),
         reasoning_effort=None,
         resume_file=str(trial_file),
-        retries=2
+        retries=2,
+        retry_delay=0.0
     )
     # Should produce 8 trials
     trials = io_.read_trials(str(trial_file))
@@ -221,7 +224,8 @@ def test_resume_only_missing(tmp_path, monkeypatch):
         output_dir=str(tmp_path),
         reasoning_effort=None,
         resume_file=str(trial_file),
-        retries=1
+        retries=1,
+        retry_delay=0.0
     )
     # Verify we now have 8 trials total
     trials = io_.read_trials(str(trial_file))

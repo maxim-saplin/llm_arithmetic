@@ -1,8 +1,9 @@
 import os
 from datetime import datetime, timezone
 import csv
+import time
 
-def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_effort: str = None, resume_file: str = None, retries: int = 3):
+def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_effort: str = None, resume_file: str = None, retries: int = 3, retry_delay: float = 5.0):
     """
     Execute the evaluation for the specified model, number of trials per cell, and digit depths.
     :param reasoning_effort: optional reasoning effort level ('low', 'medium', 'high')
@@ -154,6 +155,7 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
                         if attempt == retries - 1:
                             response = None
                         else:
+                            time.sleep(retry_delay)
                             continue
                 # Extract response details (defaults on failure)
                 if response is None:
