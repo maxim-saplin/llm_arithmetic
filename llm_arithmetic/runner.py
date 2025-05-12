@@ -111,8 +111,17 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
             total_prompt_tokens += pt
             total_completion_tokens += ct
             total_cost += cost_val
-        # Advance progress bar by count of loaded records
-        pbar.update(len(trials))
+        # Advance progress bar by count of loaded records, then refresh
+        loaded = len(trials)
+        pbar.update(loaded)
+        pbar.refresh()
+        # Inform via tqdm so bar stays intact
+        pbar.write(f"Resuming from {trial_file}: loaded {loaded}/{total_tasks} trials.")
+        # If no remaining trials, exit early
+        if loaded >= total_tasks:
+            pbar.write(f"All {total_tasks} trials already completed; nothing to run.")
+            pbar.close()
+            return
 
     # Run trials
     for variant in types.VARIANTS:
