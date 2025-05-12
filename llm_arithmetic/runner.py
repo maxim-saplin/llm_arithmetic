@@ -1,8 +1,8 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 import csv
 
-def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_effort: str = None):
+def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_effort: str = None, resume_file: str = None, retries: int = 3):
     """
     Execute the evaluation for the specified model, number of trials per cell, and digit depths.
     :param reasoning_effort: optional reasoning effort level ('low', 'medium', 'high')
@@ -40,10 +40,13 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
     # Pricing for this model
     prompt_price_per_m, completion_price_per_m = model_prices.get(model, (0.0, 0.0))
 
-    # Prepare file paths and stats container
-    date = datetime.utcnow().strftime("%Y-%m-%d_%H-%M")
+    # Prepare file paths and stats container (resume or new)
+    date = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M")
     sanitized_model = model.replace("/", "_")
-    trial_file = os.path.join(output_dir, f"{sanitized_model}_{date}.jsonl")
+    if resume_file:
+        trial_file = resume_file
+    else:
+        trial_file = os.path.join(output_dir, f"{sanitized_model}_{date}.jsonl")
     stats = {}
 
     # Initialize stats for each variant and depth
@@ -74,13 +77,51 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
     total_completion_tokens = 0
     total_cost = 0.0
     pbar = tqdm(total=total_tasks, desc=f"Model: {model}", unit="trial")
+    # If resuming, pre-load stats and advance progress
+    if resume_file and os.path.exists(trial_file):
+        # Load existing trial records via I/O module
+        trials = io_.read_trials(trial_file)
+        # Accumulate stats from existing trials
+        for rec in trials:
+            v = rec.get('variant')
+            d = rec.get('depth')
+            key = f"depth_{d}"
+            cell = stats[v][key]
+            cell['total_trials'] += 1
+            cls = rec.get('classification')
+            if cls == 'Correct':
+                global_correct += 1
+                cell['correct_count'] += 1
+            elif cls == 'NaN':
+                global_nan += 1
+                cell['nan_count'] += 1
+            else:
+                global_deviate += 1
+                cell['deviate_count'] += 1
+                err = rec.get('error') or '0'
+                cell['error_sum'] += Decimal(err)
+                global_error_sum += Decimal(err)
+            toks = rec.get('tokens', {})
+            pt = toks.get('prompt_tokens', 0)
+            ct = toks.get('completion_tokens', 0)
+            cost_val = rec.get('cost', 0.0)
+            cell['prompt_tokens_sum'] += pt
+            cell['completion_tokens_sum'] += ct
+            cell['cost_sum'] += cost_val
+            total_prompt_tokens += pt
+            total_completion_tokens += ct
+            total_cost += cost_val
+        # Advance progress bar by count of loaded records
+        pbar.update(len(trials))
 
     # Run trials
     for variant in types.VARIANTS:
         typ, op = variant.split("_")
         for depth in depths:
             cell = stats[variant][f"depth_{depth}"]
-            for _ in range(trials_per_cell):
+            # only run the remaining trials
+            remaining = trials_per_cell - cell['total_trials']
+            for _ in range(remaining):
                 # Generate operands
                 if typ == "int":
                     lhs, rhs = gen.gen_int_pair(variant, depth)
@@ -91,28 +132,42 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
                 # Build prompt
                 op_symbol = prompt.OP_SYMBOLS[op]
                 ptext = prompt.make_prompt(lhs, op_symbol, rhs)
-                # Call model with optional reasoning effort
-                response = completion(
-                    model=model,
-                    messages=[{"role": "user", "content": ptext}],
-                    reasoning_effort=reasoning_effort
-                )
-                # Extract response details
-                usage = getattr(response, 'usage', {})
-                prompt_tokens = usage.get('prompt_tokens', 0)
-                completion_tokens = usage.get('completion_tokens', 0)
+                # Call model with optional reasoning effort and retry on failure
+                for attempt in range(retries):
+                    try:
+                        response = completion(
+                            model=model,
+                            messages=[{"role": "user", "content": ptext}],
+                            reasoning_effort=reasoning_effort
+                        )
+                        break
+                    except Exception:
+                        if attempt == retries - 1:
+                            response = None
+                        else:
+                            continue
+                # Extract response details (defaults on failure)
+                if response is None:
+                    usage = {}
+                    prompt_tokens = 0
+                    completion_tokens = 0
+                    raw = ''
+                else:
+                    usage = getattr(response, 'usage', {})
+                    prompt_tokens = usage.get('prompt_tokens', 0)
+                    completion_tokens = usage.get('completion_tokens', 0)
+                    try:
+                        raw = response.choices[0].message.content.strip()
+                    except Exception:
+                        raw = ''
                 # Compute cost for this trial
                 cost = (prompt_tokens / 1_000_000) * prompt_price_per_m + (completion_tokens / 1_000_000) * completion_price_per_m
-                # Extract model output
-                raw = None
-                try:
-                    raw = response.choices[0].message.content.strip()
-                except Exception:
-                    raw = ''
                 # Parse and classify
                 parsed, classification, error = parse.parse_response(raw, correct, variant)
-                # Timestamp
-                timestamp = datetime.utcnow().isoformat() + "Z"
+                # Timestamp (UTC)
+                timestamp = datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
+                # Number of attempts used (index starts at 0)
+                attempts_taken = attempt + 1
                 # Build trial record and write
                 trial = types.Trial(
                     model=model,
@@ -127,7 +182,8 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
                     prompt_tokens=prompt_tokens,
                     completion_tokens=completion_tokens,
                     cost=cost,
-                    timestamp=timestamp
+                    timestamp=timestamp,
+                    attempts=attempts_taken
                 )
                 io_.write_trial(trial, trial_file)
                 # Update stats

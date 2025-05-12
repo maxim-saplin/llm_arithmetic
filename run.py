@@ -9,7 +9,9 @@ DEFAULT_MODEL = os.getenv("MODEL")
 DEFAULT_TRIALS = 10
 DEFAULT_DEPTHS = list(range(2, 11))
 DEFAULT_OUTPUT_DIR = "results"
-DEFAULT_REASONING_EFFORT = "high" # None, "low", "medium", "high"
+DEFAULT_REASONING_EFFORT = "high"  # None, "low", "medium", "high"
+DEFAULT_RESUME_FILE = None
+DEFAULT_RETRIES = 3
 
 def main():
     parser = argparse.ArgumentParser(
@@ -37,6 +39,14 @@ def main():
         default=DEFAULT_REASONING_EFFORT,
         help="Reasoning effort level passed to LLM (low, medium, high)"
     )
+    parser.add_argument(
+        "--resume_file", default=DEFAULT_RESUME_FILE,
+        help="Path to existing trial JSONL file to resume from"
+    )
+    parser.add_argument(
+        "--retries", type=int, default=DEFAULT_RETRIES,
+        help="Number of retries for failed LLM calls"
+    )
     args = parser.parse_args()
     if not args.model:
         parser.error("the following arguments are required: --model (or set MODEL in .env)")
@@ -45,7 +55,9 @@ def main():
         trials_per_cell=args.trials,
         depths=args.depths,
         output_dir=args.output_dir,
-        reasoning_effort=args.reasoning_effort
+        reasoning_effort=args.reasoning_effort,
+        resume_file=args.resume_file,
+        retries=args.retries
     )
 
 if __name__ == "__main__":

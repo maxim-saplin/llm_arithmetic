@@ -240,3 +240,17 @@ Run the evaluation suite with:
 ```bash
  python run.py --model <model> --trials 10 --depths 2 3 4 5 6 7 8 9 10 --output_dir results
 ```
+
+To resume an interrupted run, point `--resume_file` at the existing trials JSONL:
+
+```bash
+ python run.py --model <model> --trials 10 --depths 2 3 4 5 6 7 8 9 10 --output_dir results \
+     --resume_file results/<model>_<date>.jsonl
+```
+
+By default the harness will retry failed LLM calls 3 times; override with `--retries <N>`:
+
+```bash
+ python run.py --model <model> --trials 10 --depths 2 3 --output_dir results \
+     --resume_file results/<model>_<date>.jsonl --retries 5
+```

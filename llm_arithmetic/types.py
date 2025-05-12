@@ -23,6 +23,7 @@ class Trial:
     completion_tokens: int
     cost: float
     timestamp: str
+    attempts: int
 
 @dataclass
 class Aggregate:
