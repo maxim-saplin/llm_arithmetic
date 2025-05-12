@@ -23,7 +23,8 @@ def write_trial(trial: Trial, path: str):
         },
         "cost": trial.cost,
         "timestamp": trial.timestamp,
-        "attempts": trial.attempts
+        "attempts": trial.attempts,
+        "failed_to_get_reply": trial.failed_to_get_reply
     }
     with open(path, "a") as f:
         f.write(json.dumps(record, default=str) + "\n")

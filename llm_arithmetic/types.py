@@ -24,6 +24,7 @@ class Trial:
     cost: float
     timestamp: str
     attempts: int
+    failed_to_get_reply: bool
 
 @dataclass
 class Aggregate:

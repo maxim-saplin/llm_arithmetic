@@ -1,4 +1,6 @@
-litellm 
+litellm
+google-cloud-aiplatform
+google-generativeai
 python-dotenv 
 tqdm 
 rich

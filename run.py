@@ -6,12 +6,12 @@ import os
 load_dotenv()
 
 DEFAULT_MODEL = os.getenv("MODEL")
-DEFAULT_TRIALS = 10
-DEFAULT_DEPTHS = list(range(2, 11))
-DEFAULT_OUTPUT_DIR = "results"
-DEFAULT_REASONING_EFFORT = "high"  # None, "low", "medium", "high"
-DEFAULT_RESUME_FILE = None
-DEFAULT_RETRIES = 3
+DEFAULT_TRIALS = 10 # Default 10
+DEFAULT_DEPTHS = list(range(2, 11)) # Default 2-10
+DEFAULT_OUTPUT_DIR = "results" # Default results directory
+DEFAULT_REASONING_EFFORT = None # None, "low", "medium", "high"
+DEFAULT_RESUME_FILE = None # Default None
+DEFAULT_RETRIES = 3 # Default 3
 
 def main():
     parser = argparse.ArgumentParser(

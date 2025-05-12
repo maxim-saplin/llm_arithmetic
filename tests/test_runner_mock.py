@@ -139,6 +139,9 @@ def test_aggregate_file(tmp_path, monkeypatch):
         assert d2["accuracy"] == 1.0
         assert d2["nan_rate"] == 0.0
         assert d2["deviate_rate"] == 0.0
+    # Verify retry/failure metrics
+    assert rec["overall"]["total_retries"] == 0
+    assert rec["overall"]["failed_to_get_reply_count"] == 0
 
 def test_runner_retries_on_failure(tmp_path, monkeypatch):
     # Count how many times completion is called; fail every even call, succeed every odd
@@ -192,6 +195,13 @@ def test_runner_retries_on_failure(tmp_path, monkeypatch):
         assert rec.get("attempts") == 2
     # Ensure completion was called twice per trial
     assert call_count['count'] == 8 * 2
+    # Check aggregate metrics for retries
+    agg_path = tmp_path / "aggregate.jsonl"
+    agg_rec = json.loads(agg_path.read_text().splitlines()[0])
+    overall = agg_rec["overall"]
+    # Each of 8 trials retried once
+    assert overall["total_retries"] == 8
+    assert overall["failed_to_get_reply_count"] == 0
 
 def test_resume_only_missing(tmp_path, monkeypatch):
     # Simulate an interrupted run: pre-write 4 trials for first 4 variants
@@ -213,7 +223,8 @@ def test_resume_only_missing(tmp_path, monkeypatch):
             completion_tokens=0,
             cost=0.0,
             timestamp="2025-01-01T00:00:00Z",
-            attempts=1
+            attempts=1,
+            failed_to_get_reply=False
         )
         io_.write_trial(trial, str(trial_file))
     # Resume the run, which should write the remaining 4 variants

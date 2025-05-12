@@ -70,6 +70,9 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
     global_nan = 0
     global_deviate = 0
     global_error_sum = Decimal("0.00")
+    # Track total retries (attempts-1) and total failed replies
+    global_total_retries = 0
+    global_failed_replies = 0
 
     # Setup progress bar
     total_tasks = len(types.VARIANTS) * len(depths) * trials_per_cell
@@ -151,12 +154,21 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
                             reasoning_effort=reasoning_effort
                         )
                         break
-                    except Exception:
+                    except Exception as e:
+                        # Log the retry error
+                        pbar.write(f"Attempt {attempt+1}/{retries} failed for {variant}@depth {depth}: {e}")
                         if attempt == retries - 1:
                             response = None
                         else:
                             time.sleep(retry_delay)
-                            continue
+                        continue
+                # Flag if no response after all retries
+                failed_to_get_reply = (response is None)
+                # Count retries and failures
+                retries_used = attempt
+                global_total_retries += retries_used
+                if failed_to_get_reply:
+                    global_failed_replies += 1
                 # Extract response details (defaults on failure)
                 if response is None:
                     usage = {}
@@ -194,7 +206,8 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
                     completion_tokens=completion_tokens,
                     cost=cost,
                     timestamp=timestamp,
-                    attempts=attempts_taken
+                    attempts=attempts_taken,
+                    failed_to_get_reply=failed_to_get_reply
                 )
                 io_.write_trial(trial, trial_file)
                 # Update stats
@@ -269,7 +282,10 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
         'accuracy': global_correct / total_trials if total_trials > 0 else 0.0,
         'nan_rate': global_nan / total_trials if total_trials > 0 else 0.0,
         'deviate_rate': global_deviate / total_trials if total_trials > 0 else 0.0,
-        'avg_error': str((global_error_sum / global_deviate).quantize(Decimal("0.00"))) if global_deviate > 0 else "0.00"
+        'avg_error': str((global_error_sum / global_deviate).quantize(Decimal("0.00"))) if global_deviate > 0 else "0.00",
+        # New retry/failure metrics
+        'total_retries': global_total_retries,
+        'failed_to_get_reply_count': global_failed_replies
     }
 
     # Compute per-category (variant) aggregates across depths
