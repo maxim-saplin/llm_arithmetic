@@ -2,6 +2,7 @@ import os
 from datetime import datetime, timezone
 import csv
 import time
+import re
 
 def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_effort: str = None, resume_file: str = None, retries: int = 3, retry_delay: float = 5.0, model_alias: str = None, litellm_params: dict = None):
     """
@@ -195,6 +196,8 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
                     completion_tokens = usage.get('completion_tokens', 0)
                     try:
                         raw = response.choices[0].message.content.strip()
+                        # Remove <think>...</think> blocks from raw
+                        raw = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL)
                     except Exception:
                         raw = ''
                 # Compute cost for this trial
