@@ -20,7 +20,9 @@ SORT_BY = SortBy.ACCURACY
 AGGREGATE_FILE = os.path.join(os.getcwd(), 'aggregate.jsonl')
 
 # Minimum digit depth to include in metrics (None to include all)
-MIN_DEPTH = 5
+MIN_DEPTH = 0
+# Maximum digit depth to include in metrics (None to include all)
+MAX_DEPTH = 5
 
 def load_aggregates(path):
     records = []
@@ -38,7 +40,7 @@ def load_aggregates(path):
         return []
     return records
 
-def filter_record_by_depth(record, min_depth):
+def filter_record_by_depth(record, min_depth, max_depth):
     """
     Filter record cells by min_depth and compute per-category accuracy.
     Returns overall metrics and per_category accuracy dict.
@@ -56,6 +58,8 @@ def filter_record_by_depth(record, min_depth):
             except (IndexError, ValueError):
                 continue
             if min_depth is not None and depth < min_depth:
+                continue
+            if max_depth is not None and depth > max_depth:
                 continue
             t = stats.get('total_trials', 0)
             c = stats.get('correct_count', 0)
@@ -77,12 +81,13 @@ def build_heatmap(records):
     Build and print heatmap table of accuracy for each model (rows) and category (columns).
     """
     console = Console()
-    console.print(f"[bold]Min Depth:[/bold] {MIN_DEPTH if MIN_DEPTH is not None else 'all'}")
+    console.print(f"\n[bold]Min Depth:[/bold] {MIN_DEPTH if MIN_DEPTH is not None else 'all'}")
+    console.print(f"[bold]Max Depth:[/bold] {MAX_DEPTH if MAX_DEPTH is not None else 'all'}")
     # Collect all categories
     categories = set()
     data = []
     for rec in records:
-        overall, per_cat = filter_record_by_depth(rec, MIN_DEPTH)
+        overall, per_cat = filter_record_by_depth(rec, MIN_DEPTH, MAX_DEPTH)
         data.append({'model': rec.get('model', ''), 'overall': overall, 'per_cat': per_cat})
         categories.update(per_cat.keys())
     categories = sorted(categories)
