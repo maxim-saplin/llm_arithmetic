@@ -166,7 +166,8 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
                         # Add any custom litellm parameters
                         if litellm_params:
                             completion_kwargs.update(litellm_params)
-                        
+                        # import litellm    
+                        # litellm._turn_on_debug()
                         response = completion(**completion_kwargs)
                         break
                     except Exception as e:

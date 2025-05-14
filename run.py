@@ -5,44 +5,44 @@ import os
 import json
 load_dotenv()
 
-DEFAULT_MODEL = os.getenv("MODEL")
-DEFAULT_TRIALS = 10 # Default 10
-DEFAULT_DEPTHS = list(range(2, 11)) # Default 2-10
-DEFAULT_OUTPUT_DIR = "results" # Default results directory
-DEFAULT_REASONING_EFFORT = None # None, "low", "medium", "high"
-DEFAULT_RESUME_FILE = None # Default None
-DEFAULT_RETRIES = 3 # Default 3
-DEFAULT_RETRY_DELAY = 1 # Default 1
-DEFAULT_MODEL_ALIAS = None # Default None alias for logs and pricing
-DEFAULT_LITELLM_PARAMS = None # Default None
-# DEFAULT_LITELLM_PARAMS = {"thinking": {"type": "enabled", "budget_tokens": 1024}}
-# DEFAULT_LITELLM_PARAMS = {"thinking": {"type": "disabled"}} # By default thinking is enabled for Google models supporting it
+MODEL = os.getenv("MODEL")
+TRIALS = 10 # Default 10
+DEPTHS = list(range(2, 11)) # Default 2-10
+OUTPUT_DIR = "results" # Default results directory
+REASONING_EFFORT = None # None, "low", "medium", "high"
+RESUME_FILE = None # Default None
+RETRIES = 20 # Default 3
+RETRY_DELAY = 1 # Default 1
+MODEL_ALIAS = "gemini-2.5-flash-preview-04-17-no-thinking" # Default None alias for logs and pricing
+# LITELLM_PARAMS = None # Default None
+# LITELLM_PARAMS = {"thinking": {"type": "enabled", "budget_tokens": 1024}}
+LITELLM_PARAMS = {"thinking": { "type":"enabled", "budget_tokens": 0 }} # By default thinking is enabled for Google models supporting it
 
 def main():
     # Parse litellm_params from global var
     litellm_params = None
-    if DEFAULT_LITELLM_PARAMS:
-        if isinstance(DEFAULT_LITELLM_PARAMS, str):
+    if LITELLM_PARAMS:
+        if isinstance(LITELLM_PARAMS, str):
             try:
-                litellm_params = json.loads(DEFAULT_LITELLM_PARAMS)
+                litellm_params = json.loads(LITELLM_PARAMS)
             except json.JSONDecodeError:
                 raise ValueError("DEFAULT_LITELLM_PARAMS must be a valid JSON string")
         else:
-            litellm_params = DEFAULT_LITELLM_PARAMS
+            litellm_params = LITELLM_PARAMS
 
-    if not DEFAULT_MODEL:
+    if not MODEL:
         raise ValueError("the following arguments are required: --model (or set MODEL in .env)")
 
     run(
-        model=DEFAULT_MODEL,
-        trials_per_cell=DEFAULT_TRIALS,
-        depths=DEFAULT_DEPTHS,
-        output_dir=DEFAULT_OUTPUT_DIR,
-        reasoning_effort=DEFAULT_REASONING_EFFORT,
-        resume_file=DEFAULT_RESUME_FILE,
-        retries=DEFAULT_RETRIES,
-        retry_delay=DEFAULT_RETRY_DELAY,
-        model_alias=DEFAULT_MODEL_ALIAS,
+        model=MODEL,
+        trials_per_cell=TRIALS,
+        depths=DEPTHS,
+        output_dir=OUTPUT_DIR,
+        reasoning_effort=REASONING_EFFORT,
+        resume_file=RESUME_FILE,
+        retries=RETRIES,
+        retry_delay=RETRY_DELAY,
+        model_alias=MODEL_ALIAS,
         litellm_params=litellm_params
     )
 
