@@ -20,9 +20,9 @@ SORT_BY = SortBy.ACCURACY
 AGGREGATE_FILE = os.path.join(os.getcwd(), 'aggregate.jsonl')
 
 # Minimum digit depth to include in metrics (None to include all)
-MIN_DEPTH = 0
+MIN_DEPTH = 10
 # Maximum digit depth to include in metrics (None to include all)
-MAX_DEPTH = 5
+MAX_DEPTH = 10
 
 def load_aggregates(path):
     records = []
@@ -81,8 +81,8 @@ def build_heatmap(records):
     Build and print heatmap table of accuracy for each model (rows) and category (columns).
     """
     console = Console()
-    console.print(f"\n[bold]Min Depth:[/bold] {MIN_DEPTH if MIN_DEPTH is not None else 'all'}")
-    console.print(f"[bold]Max Depth:[/bold] {MAX_DEPTH if MAX_DEPTH is not None else 'all'}")
+    console.print(f"\n[bold]Min Depth: {MIN_DEPTH if MIN_DEPTH is not None else 'all'}[/bold]")
+    console.print(f"[bold]Max Depth: {MAX_DEPTH if MAX_DEPTH is not None else 'all'}[/bold]")
     # Collect all categories
     categories = set()
     data = []
@@ -91,6 +91,19 @@ def build_heatmap(records):
         data.append({'model': rec.get('model', ''), 'overall': overall, 'per_cat': per_cat})
         categories.update(per_cat.keys())
     categories = sorted(categories)
+
+    # Order columns: int then float with ops add, sub, mul, div
+    ordered = []
+    for prefix in ['int', 'float']:
+        for op in ['add', 'sub', 'mul', 'div']:
+            col = f"{prefix}_{op}"
+            if col in categories:
+                ordered.append(col)
+    # include any other categories afterwards
+    for col in sorted(categories):
+        if col not in ordered:
+            ordered.append(col)
+    categories = ordered
 
     # Sort records
     if SORT_BY == SortBy.MODEL:
@@ -115,10 +128,16 @@ def build_heatmap(records):
             if val is None:
                 row.append(Text('-', style='dim'))
             else:
-                hue = val * 120
-                r, g, b = hls_to_rgb(hue/360, 0.5, 1)
-                bg = f"#{int(r*255):02x}{int(g*255):02x}{int(b*255):02x}"
-                text = Text(f"{val*100:.1f}%", style=Style(color='white', bgcolor=bg))
+                # highlight perfect scores distinctly
+                if val == 1.0:
+                    text = Text(f"{val*100:.1f}%", style=Style(bold=True))
+                else:
+                    # enhance contrast: darker reds for low accuracy, brighter greens for high accuracy
+                    hue = val * 120
+                    lightness = 0.3 + 0.4 * val  # range from 0.3 to 0.7
+                    r, g, b = hls_to_rgb(hue/360, lightness, 1)
+                    bg = f"#{int(r*255):02x}{int(g*255):02x}{int(b*255):02x}"
+                    text = Text(f"{val*100:.1f}%", style=Style(color="white", bgcolor=bg))
                 row.append(text)
         table.add_row(*row)
     console.print(table)

@@ -36,6 +36,17 @@ def build_heatmap(cells, title, metric="accuracy"):
                 except ValueError:
                     pass
     depth_nums = sorted(depth_nums)
+    # Sort categories lexicographically then apply custom order
+    ordered = []
+    for prefix in ["int", "float"]:
+        for op in ["add", "sub", "mul", "div"]:
+            col = f"{prefix}_{op}"
+            if col in categories:
+                ordered.append(col)
+    for col in categories:
+        if col not in ordered:
+            ordered.append(col)
+    categories = ordered
     # Prepare table
     table = Table(title=title)
     table.add_column("Category", style="bold")
@@ -61,9 +72,17 @@ def build_heatmap(cells, title, metric="accuracy"):
                 else:
                     hue_val = 1 - val
                 hue = hue_val * 120  # 0 to 120 degrees
-                r, g, b = hls_to_rgb(hue/360, 0.5, 1)
-                bg = f"#{int(r*255):02x}{int(g*255):02x}{int(b*255):02x}"
-                text = Text(f"{display_pct:.1f}%", style=Style(color="white", bgcolor=bg))
+                # highlight best cases: accuracy == 100% or rate metrics == 0%
+                if metric == "accuracy" and val == 1.0:
+                    text = Text(f"{display_pct:.1f}%", style=Style(bold=True))
+                elif metric != "accuracy" and val == 0.0:
+                    text = Text(f"{display_pct:.1f}%", style=Style(bold=True))
+                else:
+                    # shading: darker reds to brighter greens based on hue_val
+                    lightness = 0.3 + 0.4 * hue_val
+                    r, g, b = hls_to_rgb(hue/360, lightness, 1)
+                    bg = f"#{int(r*255):02x}{int(g*255):02x}{int(b*255):02x}"
+                    text = Text(f"{display_pct:.1f}%", style=Style(color="white", bgcolor=bg))
                 row.append(text)
         table.add_row(*row)
     return table
