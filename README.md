@@ -1,8 +1,8 @@
 # llm_arithmetic
 
-![image](https://github.com/user-attachments/assets/57ec6e30-0e0c-41c2-be6f-3acd2bc12d9d)
+<img width="1163" alt="image" src="https://github.com/user-attachments/assets/5128644e-b881-4e4b-821d-4159ca13e10b" />
 
-A Python harness to evaluate Large Language Models (LLMs) on basic arithmetic operations (addition, subtraction, multiplication, division) across varying numeric depths (number of digits in numbers) and data types (integer, fixed-point denotaed as float). 
+An evaluatiation harness for Large Language Models (LLMs) testing performance in basic arithmetic operations (addition, subtraction, multiplication, division) across varying number lengths (aka depth) and data types (integer, fixed-point denotaed as float). 
 
 E.g. integer at depth 2:
 ```
