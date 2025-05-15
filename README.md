@@ -57,7 +57,6 @@ Compute the following and reply with just the numeric result (no explanation):
 ## Results
 - `grok-3-mini-beta-high` reasoning tokens wre not reghistered, price is incorrect
 - It's reasonable to do a non-strict verification, currently there's strict match of response, yet sometimes models do not follow the rules and can wrap correct replies in some markup (e.g. most of NaN results for `grok-3-mini-beta-high` are actully correct) - a separate metric for format adherence can be tracked
-- `gemini-2.5-flash-preview-04-17-??thinking` - seems Google AI Studio disregarded the provided htinking params
 
 ```
                                                                 Models Overview                                                                 
