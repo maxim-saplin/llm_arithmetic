@@ -20,9 +20,9 @@ SORT_BY = SortBy.ACCURACY
 AGGREGATE_FILE = os.path.join(os.getcwd(), 'aggregate.jsonl')
 
 # Minimum digit depth to include in metrics (None to include all)
-MIN_DEPTH = 2
+MIN_DEPTH = 6
 # Maximum digit depth to include in metrics (None to include all)
-MAX_DEPTH = 5
+MAX_DEPTH = 10
 
 def load_aggregates(path):
     records = []
