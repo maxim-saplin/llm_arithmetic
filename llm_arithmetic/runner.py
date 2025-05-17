@@ -22,7 +22,7 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
     os.makedirs(output_dir, exist_ok=True)
 
     # Load pricing metadata
-    metadata_file = os.path.join(os.getcwd(), "models_metadata.csv")
+    metadata_file = os.path.join(os.getcwd(), "data/models_metadata.csv")
     model_prices = {}
     try:
         with open(metadata_file) as mf:

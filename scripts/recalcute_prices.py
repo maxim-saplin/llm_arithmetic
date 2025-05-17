@@ -4,7 +4,7 @@ import json
 
 from llm_arithmetic.types import VARIANTS
 
-METADATA_FILE = "models_metadata.csv"
+METADATA_FILE = "data/models_metadata.csv"
 TRIAL_FILE = "results/claude-3-7-sonnet-20250219_2025-05-11_19-06.jsonl"
 AGGREGATE_FILE = "aggregate.jsonl"
 

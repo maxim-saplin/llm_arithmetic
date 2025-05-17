@@ -10,13 +10,13 @@ TRIALS = 10 # Default 10
 DEPTHS = list(range(2, 11)) # Default 2-10
 OUTPUT_DIR = "results" # Default results directory
 REASONING_EFFORT = None # None, "low", "medium", "high"
-RESUME_FILE = "results/gemini_gemini-2.5-flash-preview-04-17_2025-05-14_16-10.jsonl" # Default None
+RESUME_FILE = None # Default None
 RETRIES = 3 # Default 3
-RETRY_DELAY = 55 # Default 1
-MODEL_ALIAS = "gemini-2.5-flash-preview-04-17-no-thinking" # Default None alias for logs and pricing
-# LITELLM_PARAMS = None # Default None
+RETRY_DELAY = 5 # Default 5
+MODEL_ALIAS = None # Default None alias for logs and pricing
+LITELLM_PARAMS = None # Default None
 # LITELLM_PARAMS = {"thinking": {"type": "enabled", "budget_tokens": 1024}}
-LITELLM_PARAMS = {"thinking": { "type":"enabled", "budget_tokens": 0 }} # By default thinking is enabled for Google models supporting it
+# LITELLM_PARAMS = {"thinking": { "type":"enabled", "budget_tokens": 0 }} # By default thinking is enabled for Google models supporting it
 
 def main():
     # Parse litellm_params from global var
