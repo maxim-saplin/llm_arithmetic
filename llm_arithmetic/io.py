@@ -24,7 +24,8 @@ def write_trial(trial: Trial, path: str):
         "cost": trial.cost,
         "timestamp": trial.timestamp,
         "attempts": trial.attempts,
-        "failed_to_get_reply": trial.failed_to_get_reply
+        "failed_to_get_reply": trial.failed_to_get_reply,
+        "extra_context": trial.extra_context
     }
     with open(path, "a") as f:
         f.write(json.dumps(record, default=str) + "\n")
@@ -38,6 +39,7 @@ def write_aggregate(aggregate: Aggregate, path: str):
         "model": aggregate.model,
         "date": aggregate.date,
         "trials_per_cell": aggregate.trials_per_cell,
+        "extra_context": aggregate.extra_context,
         "overall": aggregate.overall,
         "per_category": aggregate.per_category,
         "cells": aggregate.cells

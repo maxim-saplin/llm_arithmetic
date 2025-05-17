@@ -25,6 +25,7 @@ class Trial:
     timestamp: str
     attempts: int
     failed_to_get_reply: bool
+    extra_context: int = 0
 
 @dataclass
 class Aggregate:
@@ -33,4 +34,5 @@ class Aggregate:
     trials_per_cell: int
     cells: Dict[str, Dict[str, Any]]
     overall: Dict[str, Any]
-    per_category: Dict[str, Dict[str, Any]] 
+    per_category: Dict[str, Dict[str, Any]]
+    extra_context: int = 0 

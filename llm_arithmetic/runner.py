@@ -1,10 +1,11 @@
 import os
+import json
 from datetime import datetime, timezone
 import csv
 import time
 import re
 
-def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_effort: str = None, resume_file: str = None, retries: int = 3, retry_delay: float = 5.0, model_alias: str = None, litellm_params: dict = None):
+def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_effort: str = None, resume_file: str = None, retries: int = 3, retry_delay: float = 5.0, model_alias: str = None, litellm_params: dict = None, extra_context: int = 0):
     """
     Execute the evaluation for the specified model, number of trials per cell, and digit depths.
     :param reasoning_effort: optional reasoning effort level ('low', 'medium', 'high')
@@ -20,6 +21,17 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
 
     # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)
+
+    # Load extra context messages if any
+    extra_context_messages = []
+    if extra_context and extra_context > 0:
+        dialog_path = os.path.join(os.getcwd(), "data", f"dialog_{extra_context}k.json")
+        try:
+            with open(dialog_path) as dc:
+                data = json.load(dc)
+                extra_context_messages = data.get("messages", [])
+        except Exception:
+            extra_context_messages = []
 
     # Load pricing metadata
     metadata_file = os.path.join(os.getcwd(), "data/models_metadata.csv")
@@ -156,9 +168,10 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
                 for attempt in range(retries):
                     try:
                         # Prepare completion kwargs
+                        messages = extra_context_messages + [{"role": "user", "content": ptext}] if extra_context_messages else [{"role": "user", "content": ptext}]
                         completion_kwargs = {
                             "model": model,
-                            "messages": [{"role": "user", "content": ptext}]
+                            "messages": messages
                         }
                         # Add reasoning_effort if specified
                         if reasoning_effort:
@@ -225,7 +238,8 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
                     cost=cost,
                     timestamp=timestamp,
                     attempts=attempts_taken,
-                    failed_to_get_reply=failed_to_get_reply
+                    failed_to_get_reply=failed_to_get_reply,
+                    extra_context=extra_context
                 )
                 io_.write_trial(trial, trial_file)
                 # Update stats
@@ -340,7 +354,8 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
         trials_per_cell=trials_per_cell,
         cells=formatted_cells,
         overall=overall,
-        per_category=per_category
+        per_category=per_category,
+        extra_context=extra_context
     )
     # Always append to one aggregate file
     agg_file = os.path.join(os.getcwd(), "aggregate.jsonl")

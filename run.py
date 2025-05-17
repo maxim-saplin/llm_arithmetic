@@ -11,6 +11,7 @@ DEPTHS = list(range(2, 11)) # Default 2-10
 OUTPUT_DIR = "results" # Default results directory
 REASONING_EFFORT = None # None, "low", "medium", "high"
 RESUME_FILE = None # Default None
+EXTRA_CONTEXT = 1 # Default 0: number of k tokens of dialog to include as extra context, files in data/dialog_{EXTRA_CONTEXT}k.json
 RETRIES = 3 # Default 3
 RETRY_DELAY = 5 # Default 5
 MODEL_ALIAS = None # Default None alias for logs and pricing
@@ -43,7 +44,8 @@ def main():
         retries=RETRIES,
         retry_delay=RETRY_DELAY,
         model_alias=MODEL_ALIAS,
-        litellm_params=litellm_params
+        litellm_params=litellm_params,
+        extra_context=EXTRA_CONTEXT
     )
 
 if __name__ == "__main__":
