@@ -104,6 +104,32 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
     if resume_file and os.path.exists(trial_file):
         # Load existing trial records via I/O module
         trials = io_.read_trials(trial_file)
+
+        if trials: # Ensure there are trials to check
+            last_trial = trials[-1]
+            last_trial_model = last_trial.get('model')
+            last_trial_extra_context = last_trial.get('extra_context')
+
+            # Verify model/model_alias
+            if last_trial_model != display_model:
+                raise ValueError(
+                    f"Resuming with a different model/alias. "
+                    f"Resume file model: '{last_trial_model}', Current model/alias: '{display_model}'. "
+                    f"Please ensure they match or start a new run."
+                )
+
+            # Verify extra_context
+            # Note: extra_context in trial record can be None if it was 0 during that run,
+            # while the input extra_context parameter defaults to 0.
+            current_extra_context = extra_context if extra_context else 0
+            resume_extra_context = last_trial_extra_context if last_trial_extra_context is not None else 0
+            if resume_extra_context != current_extra_context:
+                raise ValueError(
+                    f"Resuming with a different extra_context. "
+                    f"Resume file extra_context: {resume_extra_context}k, Current extra_context: {current_extra_context}k. "
+                    f"Please ensure they match or start a new run."
+                )
+
         # Accumulate stats from existing trials
         for rec in trials:
             v = rec.get('variant')
