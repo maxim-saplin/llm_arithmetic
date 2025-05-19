@@ -1,4 +1,3 @@
-import argparse
 import json
 import os
 from colorsys import hls_to_rgb
@@ -6,23 +5,31 @@ from rich.console import Console
 from rich.table import Table
 from rich.text import Text
 from rich.style import Style
+# Configuration (set at top)
+# Use None to include all models
+MODEL_FILTER = None  # e.g. "claude-3-7-sonnet-20250219"
+# Metrics to include in heatmaps
+METRICS = ["accuracy", "deviate_rate", "nan_rate"]
+# Path to raw logs directory
+RESULTS_DIR = os.path.join(os.getcwd(), 'results')
 
-def load_aggregates(path):
-    records = []
-    try:
-        with open(path) as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    records.append(json.loads(line))
-                except json.JSONDecodeError:
-                    continue
-    except FileNotFoundError:
-        return []
-    return records
-
+def load_logs(results_dir):
+    logs = []
+    for fname in os.listdir(results_dir):
+        if not fname.endswith('.jsonl'):
+            continue
+        path = os.path.join(results_dir, fname)
+        try:
+            with open(path) as f:
+                for line in f:
+                    try:
+                        rec = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    logs.append(rec)
+        except FileNotFoundError:
+            continue
+    return logs
 
 def build_heatmap(cells, title, metric="accuracy"):
     # Determine categories and depth levels
@@ -89,81 +96,138 @@ def build_heatmap(cells, title, metric="accuracy"):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Show heatmaps of LLM arithmetic accuracies"
-    )
-    parser.add_argument(
-        "--file", help="Path to aggregate JSONL file",
-        default=os.path.join(os.getcwd(), "aggregate.jsonl")
-    )
-    parser.add_argument(
-        "--model", help="Model name to filter (default: all models)",
-        default=None
-    )
-    parser.add_argument(
-        "--metrics", help="Metrics to plot (choices: accuracy, deviate_rate, nan_rate)",
-        nargs="+", choices=["accuracy", "deviate_rate", "nan_rate"],
-        default=["accuracy", "deviate_rate", "nan_rate"]
-    )
-    args = parser.parse_args()
-
-    records = load_aggregates(args.file)
-    if not records:
-        print(f"No records found in {args.file}")
+    # Load logs from configured directory
+    logs = load_logs(RESULTS_DIR)
+    if not logs:
+        print(f"No log records found in {RESULTS_DIR}")
         return
 
-    # Filter records if a model is specified
-    recs = records
-    if args.model:
-        recs = [r for r in records if r.get('model') == args.model]
+    # Filter logs if a model is specified
+    recs = logs
+    if MODEL_FILTER:
+        recs = [r for r in logs if r.get('model') == MODEL_FILTER]
         if not recs:
-            print(f"No records for model {args.model}")
+            print(f"No log records for model {MODEL_FILTER}")
             return
 
     console = Console()
+    # Determine complete vs incomplete models based on variant-depth coverage
+    # Group logs by model
+    grouped = {}
+    for rec in recs:
+        m = rec.get("model", "")
+        grouped.setdefault(m, []).append(rec)
+    # Compute distinct variant-depth combos and trial counts per model
+    variant_depth_count = {}
+    trial_count = {}
+    for m, rec_list in grouped.items():
+        combos = set()
+        for rec in rec_list:
+            variant = rec.get("variant", "")
+            depth = rec.get("depth")
+            if depth is None:
+                continue
+            combos.add((variant, depth))
+        variant_depth_count[m] = len(combos)
+        trial_count[m] = len(rec_list)
+    # Determine complete models (max combos) and list incomplete ones
+    expected_combos = max(variant_depth_count.values()) if variant_depth_count else 0
+    complete_models = [m for m, count in variant_depth_count.items() if count == expected_combos]
+    incomplete_models = [m for m, count in variant_depth_count.items() if count < expected_combos]
+    if incomplete_models:
+        console.print("[bold yellow]Ignored incomplete models:[/bold yellow]")
+        for m in sorted(incomplete_models):
+            console.print(f" - {m}: {trial_count[m]} trials")
+    # Only include complete models in overall aggregation
+    recs_overall = [rec for rec in recs if rec.get("model", "") in complete_models]
     # Build and display heatmaps for each requested metric
-    for metric in args.metrics:
-        # aggregate selected metric across records
-
+    for metric in METRICS:
+        # aggregate raw logs into per-category per-depth statistics (complete models only)
+        agg_stats = {}
+        for rec in recs_overall:
+            cat = rec.get('variant', '')
+            depth = rec.get('depth')
+            if depth is None:
+                continue
+            key = f"depth_{depth}"
+            agg_stats.setdefault(cat, {})
+            agg_stats[cat].setdefault(key, {"total": 0, "correct": 0, "deviate": 0, "nan": 0})
+            stats = agg_stats[cat][key]
+            stats["total"] += 1
+            if rec.get("classification") == "Correct":
+                stats["correct"] += 1
+            else:
+                if rec.get("error") or rec.get("failed_to_get_reply"):
+                    stats["nan"] += 1
+                else:
+                    stats["deviate"] += 1
+        # prepare cells for overall heatmap
+        cells = {}
+        for cat, depths in agg_stats.items():
+            cells[cat] = {}
+            for key, st in depths.items():
+                total = st.get("total", 0)
+                if metric == "accuracy":
+                    val = st.get("correct", 0) / total if total else 0
+                elif metric == "deviate_rate":
+                    val = st.get("deviate", 0) / total if total else 0
+                elif metric == "nan_rate":
+                    val = st.get("nan", 0) / total if total else 0
+                else:
+                    val = 0
+                cells[cat][key] = {metric: val}
         console.print("\n\n")
         console.rule(f"[bold yellow]{metric.replace('_', ' ').title()} Heatmap[/bold yellow]")
         console.print("\n")
-        
-        agg = {}
-        for r in recs:
-            cells = r.get('cells', {})
-            for cat, depths in cells.items():
-                if cat not in agg:
-                    agg[cat] = {}
-                for k, stats in depths.items():
-                    val = stats.get(metric, 0)
-                    if k not in agg[cat]:
-                        agg[cat][k] = {'sum': val, 'count': 1}
-                    else:
-                        agg[cat][k]['sum'] += val
-                        agg[cat][k]['count'] += 1
-        # compute averages
-        avg_cells = {}
-        for cat, depths in agg.items():
-            avg_cells[cat] = {}
-            for k, vs in depths.items():
-                avg_cells[cat][k] = {metric: vs['sum'] / vs['count']}
-        # overall heatmap
-        overall_table = build_heatmap(
-            avg_cells,
+        console.print(build_heatmap(
+            cells,
             f"Overall {metric.replace('_', ' ').title()} Heatmap",
             metric
-        )
-        console.print(overall_table)
+        ))
         # per-model heatmaps
-        for r in recs:
-            cells = r.get('cells', {})
-            table = build_heatmap(
+        models = sorted(set(r.get("model", "") for r in recs))
+        for model in models:
+            model_recs = [r for r in recs if r.get('model') == model]
+            # Include trial count in model title
+            trial_count = len(model_recs)
+
+            agg_stats = {}
+            for rec in model_recs:
+                cat = rec.get("variant", "")
+                depth = rec.get("depth")
+                if depth is None:
+                    continue
+                key = f"depth_{depth}"
+                agg_stats.setdefault(cat, {})
+                agg_stats[cat].setdefault(key, {"total": 0, "correct": 0, "deviate": 0, "nan": 0})
+                stats = agg_stats[cat][key]
+                stats["total"] += 1
+                if rec.get("classification") == "Correct":
+                    stats["correct"] += 1
+                else:
+                    if rec.get("error") or rec.get("failed_to_get_reply"):
+                        stats["nan"] += 1
+                    else:
+                        stats["deviate"] += 1
+            cells = {}
+            for cat, depths in agg_stats.items():
+                cells[cat] = {}
+                for key, st in depths.items():
+                    total = st.get("total", 0)
+                    if metric == "accuracy":
+                        val = st.get("correct", 0) / total if total else 0
+                    elif metric == "deviate_rate":
+                        val = st.get("deviate", 0) / total if total else 0
+                    elif metric == "nan_rate":
+                        val = st.get("nan", 0) / total if total else 0
+                    else:
+                        val = 0
+                    cells[cat][key] = {metric: val}
+            console.print(build_heatmap(
                 cells,
-                f"{r.get('model')} {metric.replace('_', ' ').title()} Heatmap",
+                f"{model} ({trial_count} trials) {metric.replace('_', ' ').title()} Heatmap",
                 metric
-            )
-            console.print(table)
+            ))
 
 if __name__ == "__main__":
     main() 

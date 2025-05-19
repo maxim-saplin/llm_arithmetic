@@ -16,80 +16,67 @@ class SortBy(Enum):
 # Sorting parameter for rows: MODEL sorts ascending; ACCURACY sorts descending
 SORT_BY = SortBy.ACCURACY
 
-# Path to aggregate JSONL file
-AGGREGATE_FILE = os.path.join(os.getcwd(), 'aggregate.jsonl')
-
 # Minimum digit depth to include in metrics (None to include all)
 MIN_DEPTH = 6
 # Maximum digit depth to include in metrics (None to include all)
 MAX_DEPTH = 10
 
-def load_aggregates(path):
-    records = []
-    try:
+# Path to raw logs directory
+RESULTS_DIR = os.path.join(os.getcwd(), 'results')
+
+def load_logs(results_dir, min_depth, max_depth):
+    stats = {}
+    for fname in os.listdir(results_dir):
+        if not fname.endswith('.jsonl'):
+            continue
+        path = os.path.join(results_dir, fname)
         with open(path) as f:
             for line in f:
-                line = line.strip()
-                if not line:
-                    continue
                 try:
-                    records.append(json.loads(line))
+                    rec = json.loads(line)
                 except json.JSONDecodeError:
                     continue
-    except FileNotFoundError:
-        return []
-    return records
+                depth = rec.get('depth')
+                if depth is None:
+                    continue
+                if min_depth is not None and depth < min_depth:
+                    continue
+                if max_depth is not None and depth > max_depth:
+                    continue
+                model = rec.get('model', '')
+                variant = rec.get('variant', '')
+                classification = rec.get('classification', '')
+                cost = rec.get('cost', 0.0)
+                stats.setdefault(model, {})
+                stats[model].setdefault(variant, {'trials': 0, 'correct': 0, 'cost': 0.0})
+                stats[model][variant]['trials'] += 1
+                if classification == 'Correct':
+                    stats[model][variant]['correct'] += 1
+                stats[model][variant]['cost'] += cost
+    data = []
+    categories = set()
+    for model, var_stats in stats.items():
+        total_trials = sum(v['trials'] for v in var_stats.values())
+        total_correct = sum(v['correct'] for v in var_stats.values())
+        total_cost = sum(v['cost'] for v in var_stats.values())
+        overall_acc = total_correct / total_trials if total_trials > 0 else 0.0
+        per_cat = {}
+        for variant, v in var_stats.items():
+            trials = v['trials']
+            per_cat[variant] = v['correct'] / trials if trials > 0 else 0.0
+            categories.add(variant)
+        overall = {'accuracy': overall_acc, 'total_trials': total_trials, 'total_cost': total_cost}
+        data.append({'model': model, 'overall': overall, 'per_cat': per_cat})
+    return data, categories
 
-def filter_record_by_depth(record, min_depth, max_depth):
-    """
-    Filter record cells by min_depth and compute per-category accuracy.
-    Returns overall metrics and per_category accuracy dict.
-    """
-    cells = record.get('cells', {})
-    total_trials = total_correct = 0
-    total_cost = 0.0
-    per_cat = {}
-    for variant, depth_dict in cells.items():
-        var_trials = var_correct = 0
-        var_cost = 0.0
-        for key, stats in depth_dict.items():
-            try:
-                depth = int(key.split('_')[1])
-            except (IndexError, ValueError):
-                continue
-            if min_depth is not None and depth < min_depth:
-                continue
-            if max_depth is not None and depth > max_depth:
-                continue
-            t = stats.get('total_trials', 0)
-            c = stats.get('correct_count', 0)
-            var_trials += t
-            var_correct += c
-            var_cost += stats.get('total_cost', 0.0)
-        if var_trials > 0:
-            acc = var_correct / var_trials
-            per_cat[variant] = acc
-            total_trials += var_trials
-            total_correct += var_correct
-            total_cost += var_cost
-    overall_acc = total_correct / total_trials if total_trials > 0 else 0.0
-    overall = {'accuracy': overall_acc, 'total_trials': total_trials, 'total_cost': total_cost}
-    return overall, per_cat
-
-def build_heatmap(records):
+def build_heatmap(data, categories):
     """
     Build and print heatmap table of accuracy for each model (rows) and category (columns).
     """
     console = Console()
     console.print(f"\n[bold]Min Depth: {MIN_DEPTH if MIN_DEPTH is not None else 'all'}[/bold]")
     console.print(f"[bold]Max Depth: {MAX_DEPTH if MAX_DEPTH is not None else 'all'}[/bold]")
-    # Collect all categories
-    categories = set()
-    data = []
-    for rec in records:
-        overall, per_cat = filter_record_by_depth(rec, MIN_DEPTH, MAX_DEPTH)
-        data.append({'model': rec.get('model', ''), 'overall': overall, 'per_cat': per_cat})
-        categories.update(per_cat.keys())
+    # Sort and prepare categories
     categories = sorted(categories)
 
     # Order columns: int then float with ops add, sub, mul, div
@@ -100,7 +87,7 @@ def build_heatmap(records):
             if col in categories:
                 ordered.append(col)
     # include any other categories afterwards
-    for col in sorted(categories):
+    for col in categories:
         if col not in ordered:
             ordered.append(col)
     categories = ordered
@@ -109,8 +96,9 @@ def build_heatmap(records):
     if SORT_BY == SortBy.MODEL:
         data.sort(key=lambda x: x['model'].lower())
     else:
-        # sort by overall accuracy descending
-        data.sort(key=lambda x: x['overall'].get('accuracy', 0.0), reverse=True)
+        # put complete logs first, then incomplete logs, each sorted by accuracy descending
+        total_cats = len(categories)
+        data.sort(key=lambda x: (len(x['per_cat']) < total_cats, -x['overall'].get('accuracy', 0.0)))
 
     # Build table
     table = Table(title='Accuracy Heatmap')
@@ -143,11 +131,11 @@ def build_heatmap(records):
     console.print(table)
 
 def main():
-    records = load_aggregates(AGGREGATE_FILE)
-    if not records:
-        print(f"No records found in {AGGREGATE_FILE}")
+    data, categories = load_logs(RESULTS_DIR, MIN_DEPTH, MAX_DEPTH)
+    if not data:
+        print(f"No log records found in {RESULTS_DIR}")
         return
-    build_heatmap(records)
+    build_heatmap(data, categories)
 
 if __name__ == '__main__':
     main() 

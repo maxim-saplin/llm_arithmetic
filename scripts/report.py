@@ -17,27 +17,77 @@ SORT_BY = SortBy.MODEL
 
 # Configuration parameters - set these globals at the top instead of using CLI arguments
 MODEL = None  # Model name to filter (string) or None for last record
-AGGREGATE_FILE = os.path.join(os.getcwd(), "aggregate.jsonl")
+RESULTS_DIR = os.path.join(os.getcwd(), "results")
 MIN_DEPTH = 5  # Minimum digit depth to include in report (integer) or None to include all
 
-def load_aggregates(path):
+def load_results():
     """
-    Load aggregate records from a JSONL file.
+    Load raw trial records from JSONL files in the results directory and aggregate by model run.
     """
-    records = []
-    try:
-        with open(path) as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    records.append(json.loads(line))
-                except json.JSONDecodeError:
-                    continue
-    except FileNotFoundError:
-        return []
-    return records
+    recs = []
+    for fname in sorted(os.listdir(RESULTS_DIR)):
+        if not fname.endswith('.jsonl'):
+            continue
+        fpath = os.path.join(RESULTS_DIR, fname)
+        trials = []
+        try:
+            with open(fpath) as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        trials.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        continue
+        except FileNotFoundError:
+            continue
+        if not trials:
+            continue
+        # Group trials by variant and depth
+        cells = {}
+        for tr in trials:
+            variant = tr.get('variant')
+            depth = tr.get('depth')
+            key = f'depth_{depth}'
+            cells.setdefault(variant, {}).setdefault(key, []).append(tr)
+        # Compute stats per cell
+        cells_stats = {}
+        for variant, depth_dict in cells.items():
+            cells_stats[variant] = {}
+            for depth_key, tlist in depth_dict.items():
+                t = len(tlist)
+                correct = sum(1 for tr in tlist if tr.get('classification') == 'Correct')
+                nan_ct = sum(1 for tr in tlist if tr.get('classification') == 'NaN')
+                dev_ct = sum(1 for tr in tlist if tr.get('classification') == 'Deviate')
+                error_sum = sum(float(tr.get('error') or 0) for tr in tlist if tr.get('classification') == 'Deviate')
+                avg_error = error_sum / dev_ct if dev_ct > 0 else 0.0
+                sum_prompt = sum(tr.get('tokens', {}).get('prompt_tokens', 0) for tr in tlist)
+                sum_completion = sum(tr.get('tokens', {}).get('completion_tokens', 0) for tr in tlist)
+                avg_prompt = sum_prompt / t if t > 0 else 0.0
+                avg_completion = sum_completion / t if t > 0 else 0.0
+                total_cost = sum(tr.get('cost') or 0 for tr in tlist)
+                cells_stats[variant][depth_key] = {
+                    'total_trials': t,
+                    'correct_count': correct,
+                    'nan_count': nan_ct,
+                    'deviate_count': dev_ct,
+                    'accuracy': correct / t if t > 0 else 0.0,
+                    'nan_rate': nan_ct / t if t > 0 else 0.0,
+                    'deviate_rate': dev_ct / t if t > 0 else 0.0,
+                    'avg_error': f"{avg_error:.2f}",
+                    'avg_prompt_tokens': avg_prompt,
+                    'avg_completion_tokens': avg_completion,
+                    'total_cost': total_cost
+                }
+        # Include raw trial count to identify incomplete runs
+        recs.append({
+            'model': trials[0].get('model', ''),
+            'date': os.path.splitext(fname)[0],
+            'cells': cells_stats,
+            'raw_trial_count': len(trials)
+        })
+    return recs
 
 def filter_record_by_depth(record, min_depth):
     """
@@ -113,9 +163,9 @@ def filter_record_by_depth(record, min_depth):
     return new_overall, new_per_cat
 
 def main():
-    recs = load_aggregates(AGGREGATE_FILE)
+    recs = load_results()
     if not recs:
-        print(f"No aggregate records found in {AGGREGATE_FILE}")
+        print(f"No records found in {RESULTS_DIR}")
         return
     console = Console()
     # If a model is specified, show detailed report for that model
@@ -127,15 +177,15 @@ def main():
         record = filtered[-1]
     # If no model and multiple records, show overview table
     elif len(recs) > 1:
-        # Sort records for overview
+        # Move incomplete runs to bottom; otherwise sort by accuracy descending
+        expected_trials = max(r.get('raw_trial_count', 0) for r in recs)
         def _sort_key(rec):
-            if SORT_BY == SortBy.MODEL:
-                return rec.get('model', '').lower()
             overall_vals, _ = (filter_record_by_depth(rec, MIN_DEPTH)
                                if MIN_DEPTH is not None else (rec.get('overall', {}), {}))
-            return overall_vals.get(SORT_BY.value, 0.0)
-        reverse_sort = False if SORT_BY == SortBy.MODEL else True
-        sorted_recs = sorted(recs, key=_sort_key, reverse=reverse_sort)
+            acc = overall_vals.get('accuracy', 0.0)
+            incomplete = rec.get('raw_trial_count', 0) < expected_trials
+            return (incomplete, -acc)
+        sorted_recs = sorted(recs, key=_sort_key)
         table = Table(title="Models Overview")
         table.add_column("Model", style="cyan")
         table.add_column("Date", style="magenta")
