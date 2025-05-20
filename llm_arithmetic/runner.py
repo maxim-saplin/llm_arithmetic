@@ -11,7 +11,7 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
     :param reasoning_effort: optional reasoning effort level ('low', 'medium', 'high')
     :param litellm_params: optional dictionary of parameters to pass directly to litellm.completion
 
-    Writes per-trial JSONL into output_dir and updates aggregate.jsonl in project root.
+    Writes per-trial JSONL into output_dir
     """
     # Delayed imports to avoid circular issues or expensive LLM import
     from decimal import Decimal
@@ -43,11 +43,11 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
                 m = row['model']
                 try:
                     p_prompt = float(row['1m_prompt'])
-                except:
+                except Exception as _:
                     p_prompt = 0.0
                 try:
                     p_completion = float(row['1m_completion'])
-                except:
+                except Exception as _:
                     p_completion = 0.0
                 model_prices[m] = (p_prompt, p_completion)
     except FileNotFoundError:
@@ -299,90 +299,3 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
                 pbar.update(1)
 
     pbar.close()
-
-    # Compute aggregated metrics per depth cell
-    formatted_cells = {}
-    for variant in types.VARIANTS:
-        formatted_cells[variant] = {}
-        for depth in depths:
-            key = f"depth_{depth}"
-            cell = stats[variant][key]
-            total = cell['total_trials']
-            dev_count = cell['deviate_count']
-            avg_error = (cell['error_sum'] / dev_count) if dev_count > 0 else Decimal("0.00")
-            avg_prompt = cell['prompt_tokens_sum'] / total if total > 0 else 0
-            avg_completion = cell['completion_tokens_sum'] / total if total > 0 else 0
-            formatted_cells[variant][key] = {
-                'total_trials': total,
-                'correct_count': cell['correct_count'],
-                'nan_count': cell['nan_count'],
-                'deviate_count': dev_count,
-                'accuracy': cell['correct_count'] / total if total > 0 else 0.0,
-                'nan_rate': cell['nan_count'] / total if total > 0 else 0.0,
-                'deviate_rate': dev_count / total if total > 0 else 0.0,
-                'avg_error': str(avg_error.quantize(Decimal("0.00"))),
-                'avg_prompt_tokens': avg_prompt,
-                'avg_completion_tokens': avg_completion,
-                'total_cost': cell['cost_sum'],
-                'avg_cost': (cell['cost_sum'] / total) if total > 0 else 0.0
-            }
-
-    # Compute model-level overall summary
-    total_trials = total_tasks
-    overall = {
-        'total_trials': total_trials,
-        'total_prompt_tokens': total_prompt_tokens,
-        'total_completion_tokens': total_completion_tokens,
-        'total_cost': total_cost,
-        'correct_count': global_correct,
-        'nan_count': global_nan,
-        'deviate_count': global_deviate,
-        'accuracy': global_correct / total_trials if total_trials > 0 else 0.0,
-        'nan_rate': global_nan / total_trials if total_trials > 0 else 0.0,
-        'deviate_rate': global_deviate / total_trials if total_trials > 0 else 0.0,
-        'avg_error': str((global_error_sum / global_deviate).quantize(Decimal("0.00"))) if global_deviate > 0 else "0.00",
-        # New retry/failure metrics
-        'total_retries': global_total_retries,
-        'failed_to_get_reply_count': global_failed_replies
-    }
-
-    # Compute per-category (variant) aggregates across depths
-    per_category = {}
-    for variant in types.VARIANTS:
-        var_stats = stats[variant]
-        # sums across depths
-        prompt_sum = sum(var_stats[f"depth_{d}"]['prompt_tokens_sum'] for d in depths)
-        completion_sum = sum(var_stats[f"depth_{d}"]['completion_tokens_sum'] for d in depths)
-        cost_sum = sum(var_stats[f"depth_{d}"]['cost_sum'] for d in depths)
-        correct_sum = sum(var_stats[f"depth_{d}"]['correct_count'] for d in depths)
-        nan_sum = sum(var_stats[f"depth_{d}"]['nan_count'] for d in depths)
-        dev_sum = sum(var_stats[f"depth_{d}"]['deviate_count'] for d in depths)
-        error_sum = sum(var_stats[f"depth_{d}"]['error_sum'] for d in depths)
-        # total trials for this variant across all depths
-        var_total_trials = sum(var_stats[f"depth_{d}"]['total_trials'] for d in depths)
-        per_category[variant] = {
-            'total_trials': var_total_trials,
-            'total_prompt_tokens': prompt_sum,
-            'total_completion_tokens': completion_sum,
-            'total_cost': cost_sum,
-            'correct_count': correct_sum,
-            'nan_count': nan_sum,
-            'deviate_count': dev_sum,
-            'accuracy': correct_sum / var_total_trials if var_total_trials > 0 else 0.0,
-            'nan_rate': nan_sum / var_total_trials if var_total_trials > 0 else 0.0,
-            'deviate_rate': dev_sum / var_total_trials if var_total_trials > 0 else 0.0,
-            'avg_error': str((error_sum / dev_sum).quantize(Decimal("0.00"))) if dev_sum > 0 else "0.00"
-        }
-    # Build aggregate record and append to a single aggregate.jsonl at project root
-    aggregate = types.Aggregate(
-        model=display_model,
-        date=date,
-        trials_per_cell=trials_per_cell,
-        cells=formatted_cells,
-        overall=overall,
-        per_category=per_category,
-        extra_context=extra_context
-    )
-    # Always append to one aggregate file
-    agg_file = os.path.join(os.getcwd(), "aggregate.jsonl")
-    io_.write_aggregate(aggregate, agg_file) 

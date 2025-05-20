@@ -1,6 +1,5 @@
 from dataclasses import dataclass
-from decimal import Decimal
-from typing import Any, Dict, List
+from typing import Any, List
 
 # Define the 8 variants: int and float operations
 VARIANTS = [
@@ -26,13 +25,3 @@ class Trial:
     attempts: int
     failed_to_get_reply: bool
     extra_context: int = 0
-
-@dataclass
-class Aggregate:
-    model: str
-    date: str
-    trials_per_cell: int
-    cells: Dict[str, Dict[str, Any]]
-    overall: Dict[str, Any]
-    per_category: Dict[str, Dict[str, Any]]
-    extra_context: int = 0 

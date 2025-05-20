@@ -104,7 +104,7 @@ def filter_record_by_depth(record, min_depth):
         for key, stats in depth_dict.items():
             try:
                 depth = int(key.split('_')[1])
-            except:
+            except Exception as _:
                 continue
             if depth < min_depth:
                 continue

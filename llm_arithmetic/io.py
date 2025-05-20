@@ -1,6 +1,6 @@
 import json
 from typing import Any, Dict
-from llm_arithmetic.types import Trial, Aggregate
+from llm_arithmetic.types import Trial
 
 
 def write_trial(trial: Trial, path: str):
@@ -29,24 +29,6 @@ def write_trial(trial: Trial, path: str):
     }
     with open(path, "a") as f:
         f.write(json.dumps(record, default=str) + "\n")
-
-
-def write_aggregate(aggregate: Aggregate, path: str):
-    """
-    Append an aggregate summary record to a JSONL file.
-    """
-    record: Dict[str, Any] = {
-        "model": aggregate.model,
-        "date": aggregate.date,
-        "trials_per_cell": aggregate.trials_per_cell,
-        "extra_context": aggregate.extra_context,
-        "overall": aggregate.overall,
-        "per_category": aggregate.per_category,
-        "cells": aggregate.cells
-    }
-    with open(path, "a") as f:
-        f.write(json.dumps(record, default=str) + "\n")
-
 
 def read_trials(path: str) -> list[dict]:
     """
