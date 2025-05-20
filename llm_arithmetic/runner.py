@@ -5,7 +5,7 @@ import csv
 import time
 import re
 
-def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_effort: str = None, resume_file: str = None, retries: int = 3, retry_delay: float = 5.0, model_alias: str = None, litellm_params: dict = None, extra_context: int = 0):
+def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_effort: str = None, resume_file: str = None, retries: int = 3, retry_delay: float = 5.0, model_alias: str = None, litellm_params: dict = None, extra_context: int = 0, system_prompt: str = None):
     """
     Execute the evaluation for the specified model, number of trials per cell, and digit depths.
     :param reasoning_effort: optional reasoning effort level ('low', 'medium', 'high')
@@ -193,8 +193,13 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
                 # Call model with optional reasoning effort and retry on failure
                 for attempt in range(retries):
                     try:
-                        # Prepare completion kwargs
-                        messages = extra_context_messages + [{"role": "user", "content": ptext}] if extra_context_messages else [{"role": "user", "content": ptext}]
+                        # Build messages list, optionally with system prompt, extra context, then user prompt
+                        messages = []
+                        if system_prompt:
+                            messages.append({"role": "system", "content": system_prompt})
+                        if extra_context_messages:
+                            messages.extend(extra_context_messages)
+                        messages.append({"role": "user", "content": ptext})
                         completion_kwargs = {
                             "model": model,
                             "messages": messages

@@ -193,6 +193,7 @@ def main():
         table.add_column("Correct %", justify="right")
         table.add_column("NaN %", justify="right")
         table.add_column("Dev %", justify="right")
+        table.add_column("Comp. Tok.", justify="right")
         table.add_column("Cost", justify="right")
         table.add_column("Avg Error", justify="right")
         # Populate rows for each model (sorted)
@@ -208,6 +209,7 @@ def main():
                 f"{o.get('accuracy',0)*100:.2f}%",
                 f"{o.get('nan_rate',0)*100:.2f}%",
                 f"{o.get('deviate_rate',0)*100:.2f}%",
+                f"{o.get('total_completion_tokens',0):.2f}",
                 f"${o.get('total_cost',0):.6f}",
                 o.get('avg_error', '')
             )
