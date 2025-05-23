@@ -5,7 +5,7 @@ import csv
 import time
 import re
 
-def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_effort: str = None, resume_file: str = None, retries: int = 3, retry_delay: float = 5.0, model_alias: str = None, litellm_params: dict = None, extra_context: int = 0, system_prompt: str = None):
+def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_effort: str = None, resume_file: str = None, retries: int = 3, retry_delay: float = 5.0, model_alias: str = None, litellm_params: dict = None, extra_context: int = 0, system_prompt: str = None, timeout_sec: int = 600):
     """
     Execute the evaluation for the specified model, number of trials per cell, and digit depths.
     :param reasoning_effort: optional reasoning effort level ('low', 'medium', 'high')
@@ -202,7 +202,8 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
                         messages.append({"role": "user", "content": ptext})
                         completion_kwargs = {
                             "model": model,
-                            "messages": messages
+                            "messages": messages,
+                            "timeout": timeout_sec
                         }
                         # Add reasoning_effort if specified
                         if reasoning_effort:

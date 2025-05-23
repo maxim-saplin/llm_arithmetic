@@ -214,6 +214,30 @@ def main():
                 o.get('avg_error', '')
             )
         console.print(table)
+        # Verification table: count per‐variant trials and check consistency
+        verif_table = Table(title="Verification")
+        verif_table.add_column("File", style="cyan")
+        verif_table.add_column("Model", style="cyan")
+        # gather all variants across all runs
+        categories = sorted({v for rec in recs for v in rec.get('cells', {})})
+        for cat in categories:
+            verif_table.add_column(cat, justify="right")
+        verif_table.add_column("Verification", justify="center")
+        # one row per run
+        for rec in sorted_recs:
+            file = rec.get('date', '')
+            model = rec.get('model', '')
+            cells = rec.get('cells', {})
+            # total trials per category
+            counts = [
+                str(sum(stats.get('total_trials', 0)
+                        for stats in cells.get(cat, {}).values()))
+                for cat in categories
+            ]
+            # valid if all counts equal
+            verification = "Valid" if len(set(counts)) == 1 else "Invalid"
+            verif_table.add_row(file, model, *counts, verification)
+        console.print(verif_table)
         # Detailed per-model cards (sorted)
         for record in sorted_recs:
             if MIN_DEPTH is not None:
