@@ -1,7 +1,5 @@
 # llm_arithmetic
 
-<img width="1163" alt="image" src="https://github.com/user-attachments/assets/5128644e-b881-4e4b-821d-4159ca13e10b" />
-
 An evaluatiation harness for Large Language Models (LLMs) testing performance in basic arithmetic operations (addition, subtraction, multiplication, division) across varying number lengths (aka depth) and data types (integer, fixed-point denotaed as float). 
 
 E.g. integer at depth 2:
@@ -55,47 +53,65 @@ Compute the following and reply with just the numeric result (no explanation):
   - A summary record appended to `aggregate.jsonl` at project root
 
 ## Results
-- `grok-3-mini-beta-high` reasoning tokens wre not reghistered, price is incorrect
-- It's reasonable to do a non-strict verification, currently there's strict match of response, yet sometimes models do not follow the rules and can wrap correct replies in some markup (e.g. most of NaN results for `grok-3-mini-beta-high` are actully correct) - a separate metric for format adherence can be tracked
 
 ```
-                                                                Models Overview                                                                 
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Model                                      ┃ Date                                                             ┃ Trials ┃ Correct % ┃  NaN % ┃  Dev % ┃       Cost ┃                Avg Error ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│ o4-mini-2025-04-16-medium                  │ o4-mini-2025-04-16_2025-05-11_16-17                              │    480 │    97.08% │  0.00% │  2.92% │  $4.903872 │               1703248.79 │
-│ o4-mini-2025-04-16-low                     │ o4-mini-2025-04-16_2025-05-14_08-54                              │    480 │    88.96% │  0.00% │ 11.04% │  $2.551050 │            6298383348.51 │
-│ deepseek-r1                                │ azure_deepseek-r1_2025-05-12_13-35                               │    480 │    84.17% │  0.21% │ 15.62% │  $3.210413 │ 154039382084726161408.00 │
-│ o3-mini-2025-01-31-medium                  │ o3-mini-2025-01-31_2025-05-14_08-56                              │    480 │    75.21% │  0.00% │ 24.79% │  $4.178371 │    305476632529746112.00 │
-│ grok-3-mini-beta-high                      │ xai_grok-3-mini-beta_2025-05-11_19-54                            │    480 │    71.88% │  1.25% │ 26.88% │  $0.006156 │   3211229392017596416.00 │
-│ deepseek-r1-4k                             │ azure_deepseek-r1_2025-05-17_11-47                               │    480 │    70.00% │  0.00% │ 30.00% │  $0.000000 │ 152466712966320324608.00 │
-│ qwen3-14b@q8_0-ctx4k-thinking              │ lm_studio_qwen3-14b@q8_0_2025-05-19_06-15                        │    480 │    66.25% │  0.21% │ 33.54% │  $0.000000 │  77885090214417252352.00 │
-│ o1-mini-2024-09-12                         │ o1-mini-2024-09-12_2025-05-14_08-57                              │    480 │    66.04% │  0.00% │ 33.96% │  $7.617905 │    659421940438044032.00 │
-│ o3-mini-2025-01-31-low                     │ o3-mini-2025-01-31_2025-05-14_08-55                              │    480 │    65.21% │  0.00% │ 34.79% │  $1.270064 │    301685096061138176.00 │
-│ qwen3-14b@iq4_xs-ctx4k-thinking            │ lm_studio_unsloth_qwen3-14b_2025-05-18_09-29                     │    480 │    65.00% │  0.42% │ 34.58% │  $0.000000 │  11234465100846067712.00 │
-│ qwen3-14b@q4_k_m-ctx4k-thinking            │ lm_studio_lmstudio-community_qwen3-14b_2025-05-18_09-31          │    480 │    64.79% │  0.00% │ 35.21% │  $0.000000 │  47105668635560574976.00 │
-│ claude-3-7-sonnet-20250219-thinking4096    │ claude-3-7-sonnet-20250219_2025-05-11_19-20                      │    480 │    57.08% │ 18.96% │ 23.96% │ $18.306354 │    773109131839652992.00 │
-│ gemini-2.5-pro-preview-03-25               │ azure_gemini-2.5-pro-preview-03-25_2025-05-12_13-31              │    480 │    55.83% │  0.00% │ 44.17% │  $0.078019 │    489039253224715008.00 │
-│ claude-3-7-sonnet-20250219-4k              │ azure_anthropic.claude-3-7-sonnet-20250219-v1:0_2025-05-17_11-46 │    480 │    52.50% │  0.00% │ 47.50% │  $0.000000 │    165137356366985824.00 │
-│ xai/grok-3-mini-beta                       │ xai_grok-3-mini-beta_2025-05-11_19-53                            │    480 │    51.46% │  0.00% │ 48.54% │  $0.006060 │ 269577858689371013120.00 │
-│ claude-3-7-sonnet-20250219                 │ claude-3-7-sonnet-20250219_2025-05-11_19-06                      │    480 │    51.04% │  0.00% │ 48.96% │  $0.114204 │      1256291313492864.50 │
-│ gemini-2.5-flash-preview-04-17-thinking    │ gemini_gemini-2.5-flash-preview-04-17_2025-05-12_10-15           │    480 │    50.42% │  0.21% │ 49.38% │  $0.315585 │   1670226792174047744.00 │
-│ gemini-2.5-flash-preview-04-17-thinking    │ gemini_gemini-2.5-flash-preview-04-17_2025-05-12_11-04           │    480 │    49.79% │  0.21% │ 50.00% │  $1.087891 │   1673196184364916480.00 │
-│ claude-v3-5-haiku                          │ azure_anthropic.claude-v3-5-haiku_2025-05-12_13-40               │    480 │    49.58% │  0.00% │ 50.42% │  $0.029816 │ 309550101099442143232.00 │
-│ gpt-4.5-preview-2025-02-27                 │ gpt-4.5-preview-2025-02-27_2025-05-14_08-57                      │    480 │    49.58% │  0.00% │ 50.42% │  $1.607175 │   1076427701424673536.00 │
-│ gpt-4.1-2025-04-14-4k                      │ azure_gpt-4.1-2025-04-14_2025-05-17_07-50                        │    480 │    48.54% │  0.00% │ 51.46% │  $5.163010 │       649981598894473.88 │
-│ gemini-2.5-flash-preview-04-17-no-thinking │ gemini_gemini-2.5-flash-preview-04-17_2025-05-14_16-10           │    480 │    48.54% │  0.00% │ 51.46% │  $0.005956 │    274503737851614912.00 │
-│ gpt-4.1-2025-04-14                         │ gpt-4.1-2025-04-14_2025-05-11_16-17                              │    480 │    48.12% │  0.00% │ 51.88% │  $0.068629 │ 142772341522668371968.00 │
-│ gpt-4.1-nano-2025-04-14                    │ gpt-4.1-nano-2025-04-14_2025-05-11_16-04                         │    480 │    38.54% │  0.42% │ 61.04% │  $0.002749 │  83620826458468040704.00 │
-│ gpt-4o-mini-2024-07-18                     │ gpt-4o-mini-2024-07-18_2025-05-11_16-17                          │    480 │    32.29% │  0.00% │ 67.71% │  $0.004137 │     40384625659291624.00 │
-│ deepseek-r1-distill-qwen-14b@iq4_xs        │ lm_studio_deepseek-r1-distill-qwen-14b_2025-05-17_18-39          │    480 │    10.21% │ 70.21% │ 19.58% │  $0.000000 │   1957756474590030848.00 │
-│ o4-mini-2025-04-16-medium-1k               │ azure_o4-mini-2025-04-16_2025-05-17_07-42                        │    102 │   100.00% │  0.00% │  0.00% │  $0.256023 │                     0.00 │
-│ o4-mini-2025-04-16-medium-2k               │ azure_o4-mini-2025-04-16_2025-05-17_07-46                        │     60 │   100.00% │  0.00% │  0.00% │  $0.243984 │                     0.00 │
-│ o4-mini-2025-04-16-medium-4k               │ azure_o4-mini-2025-04-16_2025-05-17_07-47                        │    343 │    98.83% │  0.00% │  1.17% │  $3.256108 │                 16228.50 │
-│ phi-4-reasoning-plus@q8_0                  │ lm_studio_phi-4-reasoning-plus_2025-05-18_06-29                  │     51 │    96.08% │  0.00% │  3.92% │  $0.000000 │                  4800.00 │
-│ phi-4-reasoning-plus@q4_k_s                │ lm_studio_microsoft_phi-4-reasoning-plus_2025-05-17_18-31        │    148 │    87.84% │  0.00% │ 12.16% │  $0.000000 │             147669260.00 │
-└────────────────────────────────────────────┴──────────────────────────────────────────────────────────────────┴────────┴───────────┴────────┴────────┴────────────┴──────────────────────────┘
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Model                                      ┃ Trials ┃ Correct % ┃  NaN % ┃  Dev % ┃ Comp. Tok. ┃     Cost ┃                Avg Error ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ o4-mini-2025-04-16-medium                  │    480 │    97.08% │  0.00% │  2.92% │  1 110 603 │  $4.9039 │               1703248.79 │
+│ o4-mini-2025-04-16-medium-4k               │    480 │    93.54% │  0.00% │  6.46% │  1 083 780 │  $6.7416 │          299018226294.22 │
+│ o4-mini-2025-04-16-low                     │    480 │    88.96% │  0.00% │ 11.04% │    575 871 │  $2.5510 │            6298383348.51 │
+│ deepseek-r1                                │    480 │    84.17% │  0.21% │ 15.62% │  1 462 524 │  $3.2104 │ 154039382084726161408.00 │
+│ o3-mini-2025-01-31-medium                  │    480 │    75.21% │  0.00% │ 24.79% │    945 716 │  $4.1784 │    305476632529746112.00 │
+│ grok-3-mini-beta-high                      │    480 │    71.88% │  1.25% │ 26.88% │      2 702 │  $0.0062 │   3211229392017596416.00 │
+│ deepseek-r1-4k                             │    480 │    70.00% │  0.00% │ 30.00% │    620 371 │  $0.0000 │ 152466712966320324608.00 │
+│ qwen3-32b@cerebras-thinking                │    480 │    69.58% │  5.62% │ 24.79% │  2 767 460 │  $0.0000 │ 370037212665444433920.00 │
+│ qwen3-14b@q8_0-ctx4k-thinking              │    480 │    66.25% │  0.21% │ 33.54% │  2 338 564 │  $0.0000 │  77885090214417252352.00 │
+│ o1-mini-2024-09-12                         │    480 │    66.04% │  0.00% │ 33.96% │    572 960 │  $7.6179 │    659421940438044032.00 │
+│ qwen3-14b@iq4_xs-ctx32k-thinking           │    480 │    65.83% │  0.83% │ 33.33% │  2 552 276 │  $0.0000 │   1592549121776785408.00 │
+│ qwen3-32b@iq4_xs-ctx16k-thinking           │    480 │    65.62% │  3.75% │ 30.63% │  3 499 454 │  $0.0000 │ 758724839657859055616.00 │
+│ o3-mini-2025-01-31-low                     │    480 │    65.21% │  0.00% │ 34.79% │    284 738 │  $1.2701 │    301685096061138176.00 │
+│ qwen3-14b@iq4_xs-ctx4k-thinking            │    480 │    65.00% │  0.42% │ 34.58% │  2 245 910 │  $0.0000 │  11234465100846067712.00 │
+│ qwen3-14b@q4_k_m-ctx4k-thinking            │    480 │    64.79% │  0.00% │ 35.21% │  2 334 475 │  $0.0000 │  47105668635560574976.00 │
+│ claude-3-7-sonnet-20250219-thinking4096    │    480 │    57.08% │ 18.96% │ 23.96% │  1 214 269 │ $18.3064 │    773109131839652992.00 │
+│ gemini-2.5-pro-preview-03-25               │    480 │    55.83% │  0.00% │ 44.17% │      5 517 │  $0.0780 │    489039253224715008.00 │
+│ qwen3-14b@iq4_xs-ctx32k-thinking-4k        │    480 │    55.21% │  0.21% │ 44.58% │    710 967 │  $0.0000 │   1651308628662385152.00 │
+│ claude-3-7-sonnet-20250219-4k              │    480 │    52.50% │  0.00% │ 47.50% │      4 213 │  $0.0000 │    165137356366985824.00 │
+│ xai/grok-3-mini-beta                       │    480 │    51.46% │  0.00% │ 48.54% │      2 511 │  $0.0061 │ 269577858689371013120.00 │
+│ claude-3-7-sonnet-20250219                 │    480 │    51.04% │  0.00% │ 48.96% │      4 147 │  $0.1142 │      1256291313492864.50 │
+│ gemini-2.5-flash-preview-04-17-thinking    │    480 │    50.42% │  0.21% │ 49.38% │    521 284 │  $0.3156 │   1670226792174047744.00 │
+│ gemini-2.5-flash-preview-04-17-thinking    │    480 │    49.79% │  0.21% │ 50.00% │    310 022 │  $1.0879 │   1673196184364916480.00 │
+│ claude-v3-5-haiku                          │    480 │    49.58% │  0.00% │ 50.42% │      3 987 │  $0.0298 │ 309550101099442143232.00 │
+│ gpt-4.5-preview-2025-02-27                 │    480 │    49.58% │  0.00% │ 50.42% │      2 647 │  $1.6072 │   1076427701424673536.00 │
+│ gpt-4.1-2025-04-14-4k                      │    480 │    48.54% │  0.00% │ 51.46% │      2 688 │  $5.1630 │       649981598894473.88 │
+│ gemini-2.5-flash-preview-04-17-no-thinking │    480 │    48.54% │  0.00% │ 51.46% │      5 238 │  $0.0060 │    274503737851614912.00 │
+│ gpt-4.1-2025-04-14                         │    480 │    48.12% │  0.00% │ 51.88% │      2 729 │  $0.0686 │ 142772341522668371968.00 │
+│ qwen3-32b@cerebras                         │    480 │    46.46% │  0.00% │ 53.54% │      7 457 │  $0.0000 │   1952977302069369344.00 │
+│ qwen3-32b@iq4_xs-ctx16k                    │    480 │    46.04% │  1.04% │ 52.92% │      7 132 │  $0.0000 │   1396884426959831296.00 │
+│ qwen3-14b@iq4_xs-ctx32k                    │    480 │    45.21% │  1.67% │ 53.12% │      7 533 │  $0.0000 │   2080539977910410240.00 │
+│ gpt-4.1-nano-2025-04-14                    │    480 │    38.54% │  0.42% │ 61.04% │      2 841 │  $0.0027 │  83620826458468040704.00 │
+│ gpt-4o-mini-2024-07-18                     │    480 │    32.29% │  0.00% │ 67.71% │      2 862 │  $0.0041 │     40384625659291624.00 │
+│ deepseek-r1-distill-qwen-14b@iq4_xs        │    480 │    10.21% │ 70.21% │ 19.58% │  1 113 604 │  $0.0000 │   1957756474590030848.00 │
+│ o4-mini-2025-04-16-medium-1k               │    102 │   100.00% │  0.00% │  0.00% │     37 700 │  $0.2560 │                     0.00 │
+│ o4-mini-2025-04-16-medium-2k               │     60 │   100.00% │  0.00% │  0.00% │     27 946 │  $0.2440 │                     0.00 │
+│ phi-4-reasoning-plus@q8_0                  │     51 │    96.08% │  0.00% │  3.92% │    416 681 │  $0.0000 │                  4800.00 │
+│ phi-4-reasoning-plus@q4_k_s                │    148 │    87.84% │  0.00% │ 12.16% │  1 369 685 │  $0.0000 │             147669260.00 │
+└────────────────────────────────────────────┴────────┴───────────┴────────┴────────┴────────────┴──────────┴──────────────────────────┘
 ```
+
+**Notes:**
+
+- `grok-3-mini-beta-high` reasoning tokens wre not registered, price is incorrect
+- Some models have incomplete trials (at the bottom)
+- Some models have been tested locally quantized as signified by @ symbol (e.g. qwen3-14b@iq4_xs is 4 bit quant)
+- Models that have reasoning/thinking mode and when tested in this mode have `-thinking` in the name
+- Qwen3 14B when tested in thinking mode used to produce A LOT OF tokens, hense I had to retest with increased context size (e.g. `ctx32k` means 32k context windows in LM Studio settings)
+- Some models have been tested with extra context, i.e. before the computation prompt there is a small talk dialog included above - denotes as `-1k`, `-2k` and `-4k` at the end of the model name. Testing how perormance can dropm with more text in the context which is closer to real life scenarious.
+  
+## Considerations
+- It's reasonable to do a non-strict verification, currently there's strict match of response, yet sometimes models do not follow the rules and can wrap correct replies in some markup (e.g. most of NaN results for `grok-3-mini-beta-high` are actully correct) - a separate metric for format adherence can be tracked
+- Floats are actually decimals - i.e. fixed point math using numbers with 2 decimals after the decimal separator
+- Float's also are longer at same depths - i.e. int at 4 is exactly 4 digits (e.g. 1234), float at 4 deptyh is 6 digits (1234.56) - that's a bug that made it into a feature
 
 ## Installation
 
