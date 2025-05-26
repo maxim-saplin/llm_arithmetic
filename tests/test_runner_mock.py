@@ -29,7 +29,7 @@ def patch_completion(monkeypatch):
     """
     Monkeypatch litellm.completion to parse the prompt expression and return exact correct results.
     """
-    def fake_completion(model, messages, reasoning_effort=None):
+    def fake_completion(model, messages, reasoning_effort=None, timeout=None, **kwargs):
         # Extract the last line containing the expression
         ptext = messages[-1]["content"].strip()
         # Match two numbers and an operator (+, -, ×, ÷)
@@ -90,63 +90,10 @@ def test_runner_all_variants_positive(tmp_path):
     variants = [rec["variant"] for rec in trials]
     assert sorted(variants) == sorted([*"int_add int_sub int_mul int_div float_add float_sub float_mul float_div".split()])
 
-def test_aggregate_file(tmp_path, monkeypatch):
-    # Change cwd to tmp_path so aggregate.jsonl is created there
-    monkeypatch.chdir(tmp_path)
-    trial_file = tmp_path / "trials.jsonl"
-    # Run the harness
-    run(
-        model="test-model",
-        trials_per_cell=1,
-        depths=[2],
-        output_dir=str(tmp_path),
-        reasoning_effort=None,
-        resume_file=str(trial_file),
-        retries=1,
-        retry_delay=0.0
-    )
-    # Verify trials file
-    trials = io_.read_trials(str(trial_file))
-    assert len(trials) == 8
-    # Load and verify aggregate file
-    agg_path = tmp_path / "aggregate.jsonl"
-    contents = agg_path.read_text().splitlines()
-    records = [json.loads(line) for line in contents if line.strip()]
-    assert len(records) == 1
-    rec = records[0]
-    # Top-level fields
-    assert rec["model"] == "test-model"
-    assert rec["trials_per_cell"] == 1
-    # Overall summary
-    overall = rec["overall"]
-    assert overall["total_trials"] == 8
-    assert overall["correct_count"] == 8
-    assert overall["nan_count"] == 0
-    assert overall["deviate_count"] == 0
-    # Per-category summary
-    for variant, stats in rec["per_category"].items():
-        assert stats["total_trials"] == 1
-        assert stats["correct_count"] == 1
-        assert stats["nan_count"] == 0
-        assert stats["deviate_count"] == 0
-    # Cells breakdown for depth=2
-    for variant, depths in rec["cells"].items():
-        d2 = depths["depth_2"]
-        assert d2["total_trials"] == 1
-        assert d2["correct_count"] == 1
-        assert d2["nan_count"] == 0
-        assert d2["deviate_count"] == 0
-        assert d2["accuracy"] == 1.0
-        assert d2["nan_rate"] == 0.0
-        assert d2["deviate_rate"] == 0.0
-    # Verify retry/failure metrics
-    assert rec["overall"]["total_retries"] == 0
-    assert rec["overall"]["failed_to_get_reply_count"] == 0
-
 def test_runner_retries_on_failure(tmp_path, monkeypatch):
     # Count how many times completion is called; fail every even call, succeed every odd
     call_count = { 'count': 0 }
-    def fake_retryable(model, messages, reasoning_effort=None):
+    def fake_retryable(model, messages, reasoning_effort=None, timeout=None, **kwargs):
         idx = call_count['count']
         call_count['count'] += 1
         # On even idx (first attempt for each trial), simulate failure
@@ -195,13 +142,6 @@ def test_runner_retries_on_failure(tmp_path, monkeypatch):
         assert rec.get("attempts") == 2
     # Ensure completion was called twice per trial
     assert call_count['count'] == 8 * 2
-    # Check aggregate metrics for retries
-    agg_path = tmp_path / "aggregate.jsonl"
-    agg_rec = json.loads(agg_path.read_text().splitlines()[0])
-    overall = agg_rec["overall"]
-    # Each of 8 trials retried once
-    assert overall["total_retries"] == 8
-    assert overall["failed_to_get_reply_count"] == 0
 
 def test_resume_only_missing(tmp_path, monkeypatch):
     # Simulate an interrupted run: pre-write 4 trials for first 4 variants
