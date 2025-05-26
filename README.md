@@ -101,6 +101,7 @@ Compute the following and reply with just the numeric result (no explanation):
 
 **Notes:**
 
+- Resulta exclude depths <5 since shorter numbers are generally easy for LLMs and many get close to 100% accuracy
 - `grok-3-mini-beta-high` reasoning tokens wre not registered, price is incorrect
 - Some models have incomplete trials (at the bottom)
 - Some models have been tested locally quantized as signified by @ symbol (e.g. qwen3-14b@iq4_xs is 4 bit quant)
