@@ -60,8 +60,13 @@ def load_results():
                 correct = sum(1 for tr in tlist if tr.get('classification') == 'Correct')
                 nan_ct = sum(1 for tr in tlist if tr.get('classification') == 'NaN')
                 dev_ct = sum(1 for tr in tlist if tr.get('classification') == 'Deviate')
-                error_sum = sum(float(tr.get('error') or 0) for tr in tlist if tr.get('classification') == 'Deviate')
-                avg_error = error_sum / dev_ct if dev_ct > 0 else 0.0
+                # Compute sum of relative errors for deviate trials using numeric correct value
+                error_sum_rel = sum(
+                    (float(tr.get('error') or 0) / abs(float(tr.get('correct') or 0))
+                     if float(tr.get('correct') or 0) != 0 else 0.0)
+                    for tr in tlist if tr.get('classification') == 'Deviate'
+                )
+                avg_error = (error_sum_rel / dev_ct) if dev_ct > 0 else 0.0
                 sum_prompt = sum(tr.get('tokens', {}).get('prompt_tokens', 0) for tr in tlist)
                 sum_completion = sum(tr.get('tokens', {}).get('completion_tokens', 0) for tr in tlist)
                 avg_prompt = sum_prompt / t if t > 0 else 0.0
@@ -75,7 +80,7 @@ def load_results():
                     'accuracy': correct / t if t > 0 else 0.0,
                     'nan_rate': nan_ct / t if t > 0 else 0.0,
                     'deviate_rate': dev_ct / t if t > 0 else 0.0,
-                    'avg_error': f"{avg_error:.2f}",
+                    'avg_error': avg_error,
                     'avg_prompt_tokens': avg_prompt,
                     'avg_completion_tokens': avg_completion,
                     'total_cost': total_cost
@@ -135,7 +140,7 @@ def filter_record_by_depth(record, min_depth):
                 'accuracy': per_accuracy,
                 'nan_rate': per_nan_rate,
                 'deviate_rate': per_dev_rate,
-                'avg_error': f"{per_avg_error:.2f}",
+                'avg_error': per_avg_error,
                 'total_cost': var_cost
             }
             total_trials += var_total_trials
@@ -158,7 +163,7 @@ def filter_record_by_depth(record, min_depth):
         'total_prompt_tokens': total_prompt_tokens,
         'total_completion_tokens': total_completion_tokens,
         'total_cost': total_cost,
-        'avg_error': f"{overall_avg_error:.2f}"
+        'avg_error': overall_avg_error
     }
     return new_overall, new_per_cat
 
@@ -211,7 +216,7 @@ def main():
                 f"{o.get('deviate_rate',0)*100:.2f}%",
                 f"{o.get('total_completion_tokens',0):.2f}",
                 f"${o.get('total_cost',0):.6f}",
-                o.get('avg_error', '')
+                f"{o.get('avg_error',0)*100:.2f}%"
             )
         console.print(table)
         # Verification table: count per‐variant trials and check consistency
@@ -255,7 +260,7 @@ def main():
                 if key not in overall:
                     continue
                 val = overall[key]
-                if key in ('accuracy', 'nan_rate', 'deviate_rate'):
+                if key in ('accuracy', 'nan_rate', 'deviate_rate', 'avg_error'):
                     val_str = f"{val*100:.2f}%"
                 elif 'cost' in key:
                     val_str = f"${val:.6f}"
@@ -281,7 +286,7 @@ def main():
                         f"{stats.get('accuracy',0)*100:.2f}%",
                         f"{stats.get('nan_rate',0)*100:.2f}%",
                         f"{stats.get('deviate_rate',0)*100:.2f}%",
-                        stats.get('avg_error',''),
+                        f"{stats.get('avg_error',0)*100:.2f}%",
                         f"${stats.get('total_cost',0):.6f}"
                     )
                 console.print(detail_table)
@@ -306,7 +311,7 @@ def main():
         if key not in overall:
             continue
         val = overall[key]
-        if key in ('accuracy', 'nan_rate', 'deviate_rate'):
+        if key in ('accuracy', 'nan_rate', 'deviate_rate', 'avg_error'):
             val_str = f"{val*100:.2f}%"
         elif 'cost' in key:
             val_str = f"${val:.6f}"
@@ -333,7 +338,7 @@ def main():
                 f"{stats.get('accuracy',0)*100:.2f}%",
                 f"{stats.get('nan_rate',0)*100:.2f}%",
                 f"{stats.get('deviate_rate',0)*100:.2f}%",
-                stats.get('avg_error',''),
+                f"{stats.get('avg_error',0)*100:.2f}%",
                 f"${stats.get('total_cost',0):.6f}"
             )
         console.print(table)
