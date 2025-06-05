@@ -88,7 +88,7 @@ def load_results():
         # Include raw trial count to identify incomplete runs
         recs.append({
             'model': trials[0].get('model', ''),
-            'date': os.path.splitext(fname)[0],
+            'date': "_".join(os.path.splitext(fname)[0].split("_")[-2:]),
             'cells': cells_stats,
             'raw_trial_count': len(trials)
         })
@@ -193,7 +193,7 @@ def main():
         sorted_recs = sorted(recs, key=_sort_key)
         table = Table(title="Models Overview")
         table.add_column("Model", style="cyan")
-        table.add_column("Date", style="magenta")
+        # table.add_column("Date", style="magenta")
         table.add_column("Trials", justify="right")
         table.add_column("Correct %", justify="right")
         table.add_column("NaN %", justify="right")
@@ -209,14 +209,14 @@ def main():
                 o = r.get('overall', {})
             table.add_row(
                 r.get('model', ''),
-                r.get('date', ''),
+                # r.get('date', ''),
                 str(o.get('total_trials', '')),
                 f"{o.get('accuracy',0)*100:.2f}%",
                 f"{o.get('nan_rate',0)*100:.2f}%",
                 f"{o.get('deviate_rate',0)*100:.2f}%",
                 f"{o.get('total_completion_tokens',0):.2f}",
                 f"${o.get('total_cost',0):.6f}",
-                f"{o.get('avg_error',0)*100:.2f}%"
+                f"{o.get('avg_error',0)*100:.3f}%"
             )
         console.print(table)
         # Verification table: count per‐variant trials and check consistency

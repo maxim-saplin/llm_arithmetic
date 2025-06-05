@@ -13,6 +13,7 @@ deepseek-chat, 0.27, 1.10, 2024-12,
 deepseek-chat-0324, 0.27, 1.10, 2025-03,
 deepseek-reasoner, 0.55, 2.19, 2025-01,
 deepseek-r1, 0.55, 2.19, 2025-01,
+deepseek-r1-0528, 0.55, 2.19, 2025-05,
 deepseek-r1-distill-qwen-14b@q8_0, 0.05, 0.2, 2025-01,Assuming Alibiba Qwen-Turbo price divided by 2
 deepseek-r1-distill-qwen-32b@q4_k_m, 0.05, 0.2, 2025-01,Assuming Alibiba Qwen-Turbo price
 DeepSeek-R1-Distill-Llama-70B-FP8, 0.23, 0.4, 2024-01, DeepInfra price for LLama 3 70B
@@ -100,4 +101,6 @@ gemini/gemini-2.5-flash-preview-04-17, 0.15, 0.60, 2025-03
 gemini/gemini-2.5-flash-preview-04-17-thinking, 0.15, 3.50, 2025-04
 gemini/gemini-2.5-pro-preview-05-06, 1.25, 10.0, 2025-05
 claude-sonnet-4@20250514, 3, 15, 2025-05
+anthropic.claude-sonnet-4-20250514-v1:0-with-thinking, 3, 15, 2025-05
 claude-opus-4@20250514, 15, 75, 2025-05
+anthropic.claude-opus-4-20250514-v1:0, 3, 15, 2025-05
