@@ -5,7 +5,7 @@ import csv
 import time
 import re
 
-def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_effort: str = None, resume_file: str = None, retries: int = 3, retry_delay: float = 5.0, model_alias: str = None, litellm_params: dict = None, extra_context: int = 0, system_prompt: str = None, timeout_sec: int = 600):
+def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_effort: str = None, resume_file: str = None, retries: int = 5, retry_delay: float = 5.0, model_alias: str = None, litellm_params: dict = None, extra_context: int = 0, system_prompt: str = None, timeout_sec: int = 600):
     """
     Execute the evaluation for the specified model, number of trials per cell, and digit depths.
     :param reasoning_effort: optional reasoning effort level ('low', 'medium', 'high')
@@ -191,6 +191,7 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
                 op_symbol = prompt.OP_SYMBOLS[op]
                 ptext = prompt.make_prompt(lhs, op_symbol, rhs)
                 # Call model with optional reasoning effort and retry on failure
+                delay = retry_delay
                 for attempt in range(retries):
                     try:
                         # Build messages list, optionally with system prompt, extra context, then user prompt
@@ -221,7 +222,8 @@ def run(model: str, trials_per_cell: int, depths, output_dir: str, reasoning_eff
                         if attempt == retries - 1:
                             response = None
                         else:
-                            time.sleep(retry_delay)
+                            delay *= 2
+                            time.sleep(delay)
                         continue
                 # Flag if no response after all retries
                 failed_to_get_reply = (response is None)
