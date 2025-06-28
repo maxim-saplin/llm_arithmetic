@@ -67,6 +67,16 @@ def load_results():
                     for tr in tlist if tr.get('classification') == 'Deviate'
                 )
                 avg_error = (error_sum_rel / dev_ct) if dev_ct > 0 else 0.0
+                
+                # Compute sum of relative errors for all (Correct + Deviate) trials
+                # Correct trials have 0 error
+                general_error_sum_rel = sum(
+                    (float(tr.get('error') or 0) / abs(float(tr.get('correct') or 0))
+                     if float(tr.get('correct') or 0) != 0 else 0.0)
+                    for tr in tlist if tr.get('classification') in ['Deviate', 'Correct']
+                )
+                general_avg_error = (general_error_sum_rel / (correct + dev_ct)) if (correct + dev_ct) > 0 else 0.0
+                
                 sum_prompt = sum(tr.get('tokens', {}).get('prompt_tokens', 0) for tr in tlist)
                 sum_completion = sum(tr.get('tokens', {}).get('completion_tokens', 0) for tr in tlist)
                 avg_prompt = sum_prompt / t if t > 0 else 0.0
@@ -81,6 +91,7 @@ def load_results():
                     'nan_rate': nan_ct / t if t > 0 else 0.0,
                     'deviate_rate': dev_ct / t if t > 0 else 0.0,
                     'avg_error': avg_error,
+                    'general_avg_error': general_avg_error,
                     'avg_prompt_tokens': avg_prompt,
                     'avg_completion_tokens': avg_completion,
                     'total_cost': total_cost
@@ -102,10 +113,12 @@ def filter_record_by_depth(record, min_depth):
     total_trials = total_correct = total_nan = total_dev = 0
     total_error_sum = 0.0
     total_prompt_tokens = total_completion_tokens = total_cost = 0.0
+    total_general_error_sum = 0.0  # New: Sum for general error
     new_per_cat = {}
     for variant, depth_dict in cells.items():
         var_total_trials = var_correct = var_nan = var_dev = 0
         var_error_sum = var_prompt_tokens = var_completion_tokens = var_cost = 0.0
+        var_general_error_sum = 0.0 # New: Sum for general error per variant
         for key, stats in depth_dict.items():
             try:
                 depth = int(key.split('_')[1])
@@ -119,11 +132,15 @@ def filter_record_by_depth(record, min_depth):
             d = stats.get('deviate_count', 0)
             avg_error = float(stats.get('avg_error', "0"))
             error_sum = d * avg_error
+            general_avg_error = float(stats.get('general_avg_error', "0")) # New: get general avg error
+            general_error_sum = (c + d) * general_avg_error # New: calculate general error sum
+
             var_total_trials += t
             var_correct += c
             var_nan += n
             var_dev += d
             var_error_sum += error_sum
+            var_general_error_sum += general_error_sum # New: accumulate general error
             var_prompt_tokens += stats.get('avg_prompt_tokens', 0.0) * t
             var_completion_tokens += stats.get('avg_completion_tokens', 0.0) * t
             var_cost += stats.get('total_cost', 0.0)
@@ -132,6 +149,7 @@ def filter_record_by_depth(record, min_depth):
             per_nan_rate = var_nan / var_total_trials
             per_dev_rate = var_dev / var_total_trials
             per_avg_error = var_error_sum / var_dev if var_dev > 0 else 0.0
+            per_general_avg_error = var_general_error_sum / (var_correct + var_dev) if (var_correct + var_dev) > 0 else 0.0 # New: calculate per-variant general avg error
             new_per_cat[variant] = {
                 'total_trials': var_total_trials,
                 'correct_count': var_correct,
@@ -141,6 +159,7 @@ def filter_record_by_depth(record, min_depth):
                 'nan_rate': per_nan_rate,
                 'deviate_rate': per_dev_rate,
                 'avg_error': per_avg_error,
+                'general_avg_error': per_general_avg_error, # New field
                 'total_cost': var_cost
             }
             total_trials += var_total_trials
@@ -148,6 +167,7 @@ def filter_record_by_depth(record, min_depth):
             total_nan += var_nan
             total_dev += var_dev
             total_error_sum += var_error_sum
+            total_general_error_sum += var_general_error_sum # New: accumulate total general error
             total_prompt_tokens += var_prompt_tokens
             total_completion_tokens += var_completion_tokens
             total_cost += var_cost
@@ -155,6 +175,7 @@ def filter_record_by_depth(record, min_depth):
     overall_nan_rate = total_nan / total_trials if total_trials > 0 else 0.0
     overall_dev_rate = total_dev / total_trials if total_trials > 0 else 0.0
     overall_avg_error = total_error_sum / total_dev if total_dev > 0 else 0.0
+    overall_general_avg_error = total_general_error_sum / (total_correct + total_dev) if (total_correct + total_dev) > 0 else 0.0 # New: calculate overall general avg error
     new_overall = {
         'total_trials': total_trials,
         'accuracy': overall_accuracy,
@@ -163,7 +184,8 @@ def filter_record_by_depth(record, min_depth):
         'total_prompt_tokens': total_prompt_tokens,
         'total_completion_tokens': total_completion_tokens,
         'total_cost': total_cost,
-        'avg_error': overall_avg_error
+        'avg_error': overall_avg_error,
+        'general_avg_error': overall_general_avg_error # New field
     }
     return new_overall, new_per_cat
 
@@ -200,7 +222,8 @@ def main():
         table.add_column("Dev %", justify="right")
         table.add_column("Comp. Tok.", justify="right")
         table.add_column("Cost", justify="right")
-        table.add_column("Avg Error", justify="right")
+        table.add_column("Avg Error (Dev)", justify="right")
+        table.add_column("Avg Error (Dev&Corr)", justify="right")
         # Populate rows for each model (sorted)
         for r in sorted_recs:
             if MIN_DEPTH is not None:
@@ -212,11 +235,12 @@ def main():
                 # r.get('date', ''),
                 str(o.get('total_trials', '')),
                 f"{o.get('accuracy',0)*100:.2f}%",
-                f"{o.get('nan_rate',0)*100:.2f}%",
+                f"{o.get('nan_rate',0)*100:.4f}%",
                 f"{o.get('deviate_rate',0)*100:.2f}%",
                 f"{o.get('total_completion_tokens',0):.2f}",
                 f"${o.get('total_cost',0):.6f}",
-                f"{o.get('avg_error',0)*100:.3f}%"
+                f"{o.get('avg_error',0)*100:.3f}%",
+                f"{o.get('general_avg_error',0)*100:.3f}%"
             )
         console.print(table)
         # Verification table: count per‐variant trials and check consistency
@@ -255,12 +279,12 @@ def main():
             for key in [
                 'total_trials', 'accuracy', 'nan_rate', 'deviate_rate',
                 'total_prompt_tokens', 'total_completion_tokens',
-                'total_cost', 'avg_error'
+                'total_cost', 'avg_error', 'general_avg_error'
             ]:
                 if key not in overall:
                     continue
                 val = overall[key]
-                if key in ('accuracy', 'nan_rate', 'deviate_rate', 'avg_error'):
+                if key in ('accuracy', 'nan_rate', 'deviate_rate', 'avg_error', 'general_avg_error'):
                     val_str = f"{val*100:.2f}%"
                 elif 'cost' in key:
                     val_str = f"${val:.6f}"
@@ -277,7 +301,8 @@ def main():
                 detail_table.add_column("Correct %", justify="right")
                 detail_table.add_column("NaN %", justify="right")
                 detail_table.add_column("Dev %", justify="right")
-                detail_table.add_column("Avg Error", justify="right")
+                detail_table.add_column("Avg Error (Dev)", justify="right")
+                detail_table.add_column("Avg Error (Dev&Corr)", justify="right")
                 detail_table.add_column("Cost", justify="right")
                 for variant, stats in per_cat.items():
                     detail_table.add_row(
@@ -287,6 +312,7 @@ def main():
                         f"{stats.get('nan_rate',0)*100:.2f}%",
                         f"{stats.get('deviate_rate',0)*100:.2f}%",
                         f"{stats.get('avg_error',0)*100:.2f}%",
+                        f"{stats.get('general_avg_error',0)*100:.2f}%",
                         f"${stats.get('total_cost',0):.6f}"
                     )
                 console.print(detail_table)
@@ -306,12 +332,12 @@ def main():
     for key in [
         'total_trials', 'accuracy', 'nan_rate', 'deviate_rate',
         'total_prompt_tokens', 'total_completion_tokens',
-        'total_cost', 'avg_error'
+        'total_cost', 'avg_error', 'general_avg_error'
     ]:
         if key not in overall:
             continue
         val = overall[key]
-        if key in ('accuracy', 'nan_rate', 'deviate_rate', 'avg_error'):
+        if key in ('accuracy', 'nan_rate', 'deviate_rate', 'avg_error', 'general_avg_error'):
             val_str = f"{val*100:.2f}%"
         elif 'cost' in key:
             val_str = f"${val:.6f}"
@@ -329,16 +355,18 @@ def main():
         table.add_column("Correct %", justify="right")
         table.add_column("NaN %", justify="right")
         table.add_column("Dev %", justify="right")
-        table.add_column("Avg Error", justify="right")
+        table.add_column("Avg Error (Dev)", justify="right")
+        table.add_column("Avg Error (Dev&Corr)", justify="right")
         table.add_column("Cost", justify="right")
         for variant, stats in per_cat.items():
             table.add_row(
                 variant,
-                str(stats.get('total_trials', '')),  
+                str(stats.get('total_trials', '')),
                 f"{stats.get('accuracy',0)*100:.2f}%",
                 f"{stats.get('nan_rate',0)*100:.2f}%",
                 f"{stats.get('deviate_rate',0)*100:.2f}%",
                 f"{stats.get('avg_error',0)*100:.2f}%",
+                f"{stats.get('general_avg_error',0)*100:.2f}%",
                 f"${stats.get('total_cost',0):.6f}"
             )
         console.print(table)
