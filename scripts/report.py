@@ -237,10 +237,10 @@ def main():
                 f"{o.get('accuracy',0)*100:.2f}%",
                 f"{o.get('nan_rate',0)*100:.4f}%",
                 f"{o.get('deviate_rate',0)*100:.2f}%",
-                f"{o.get('total_completion_tokens',0):.2f}",
-                f"${o.get('total_cost',0):.6f}",
-                f"{o.get('avg_error',0)*100:.3f}%",
-                f"{o.get('general_avg_error',0)*100:.3f}%"
+                f"{int(o.get('total_completion_tokens',0)):,}",
+                f"${o.get('total_cost',0):.4f}",
+                f"{o.get('avg_error',0)*100:.4f}%",
+                f"{o.get('general_avg_error',0)*100:.4f}%"
             )
         console.print(table)
         # Verification table: count per‐variant trials and check consistency
