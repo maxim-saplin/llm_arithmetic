@@ -14,44 +14,6 @@ Compute the following and reply with just the numeric result (no explanation):
    82248.19 * 96362.66
 ```
 
-## Features
-
-- Supports integer and fixed-point "float" arithmetic
-- Parametrized digit depths (2 to 10)
-- Generates random test operands with controlled valid inputs (e.g., integer division always yields integer results)
-- Prompts LLMs via `litellm`
-- Parses numeric responses with regex
-- Classifies results as `Correct` (exact match), `Deviate`, or `NaN` (not a number in model response)
-- Records token usage and costs
-- Outputs per-trial JSONL
-
-## Testing Rules and Constraints
-
-- **Integer operands**:
-  - Depth *d*: values from $10^{d-1}$ to $10^d - 1$
-  - `int_div` pairs are constructed so division yields an exact integer result
-
-- **Floating-point operands**:
-  - Inputs have two decimal places (fixed-point scale 0.01)
-  - Depth *d*: base magnitudes from $10^{d-1}$ to $10^d - 1$ before scaling
-  - Addition/Subtraction: exact two decimal places
-  - Multiplication/Division: results quantized to four decimal places
-
-- **Prompting & parsing**:
-  - Models receive: "Compute the following and reply with just the numeric result (no explanation)"
-  - Responses are parsed via regex and classified as:
-    - `Correct`: exact match to the computed result
-    - `Deviate`: numeric but off – logged with absolute error
-    - `NaN`: non-numeric or parsing failure
-
-- **Trials & depths**:
-  - Default 10 trials per variant/depth combination
-  - Default depths: 2 through 10 digits
-
-- **Outputs**:
-  - Per-trial JSONL written to the configured results directory
-  - A summary record appended to `aggregate.jsonl` at project root
-
 ## Results (Depth >= 5)
 
 ```
@@ -112,7 +74,11 @@ Compute the following and reply with just the numeric result (no explanation):
 ```
 
 **Notes:**
-
+- `Correct %` are responses that got succesfully parsed as numbers (pasrsing is not strict and makes a best attempt to extract the last number in response) and were accurate to every digit
+- `NaN %` (Not-a-Number) - number was not parsed from LLM reply
+- `Dev %` - parsed number is not accurate and there's a non-zero deviation from the true value
+- `Avg Error (Dev)` is the deciating numbers (not accurate to the point), i.e. it is an avg error for all responses that got into `Dev %` category
+- `Avg Error (Dev&Corr)` is the average error for all responses that parsed as numbers (`Correct %` and `Dev %` cateories), i.e. it is an overall error estimate including both accurate responses and responses that deviated
 - Resulta exclude depths <5 since shorter numbers are generally easy for LLMs and many get close to 100% accuracy
 - `grok-3-mini-beta-high` reasoning tokens wre not registered, price is incorrect
 - Some models have incomplete trials (at the bottom)
@@ -121,6 +87,45 @@ Compute the following and reply with just the numeric result (no explanation):
 - Qwen3 14B when tested in thinking mode used to produce A LOT OF tokens, hense I had to retest with increased context size (e.g. `ctx32k` means 32k context windows in LM Studio settings)
 - Some models have been tested with extra context, i.e. before the computation prompt there is a small talk dialog included above - denotes as `-1k`, `-2k` and `-4k` at the end of the model name. Testing how perormance can dropm with more text in the context which is closer to real life scenarious.
   
+
+## Features
+
+- Supports integer and fixed-point "float" arithmetic
+- Parametrized digit depths (2 to 10)
+- Generates random test operands with controlled valid inputs (e.g., integer division always yields integer results)
+- Prompts LLMs via `litellm`
+- Parses numeric responses with regex
+- Classifies results as `Correct` (exact match), `Deviate`, or `NaN` (not a number in model response)
+- Records token usage and costs
+- Outputs per-trial JSONL
+
+## Testing Rules and Constraints
+
+- **Integer operands**:
+  - Depth *d*: values from $10^{d-1}$ to $10^d - 1$
+  - `int_div` pairs are constructed so division yields an exact integer result
+
+- **Floating-point operands**:
+  - Inputs have two decimal places (fixed-point scale 0.01)
+  - Depth *d*: base magnitudes from $10^{d-1}$ to $10^d - 1$ before scaling
+  - Addition/Subtraction: exact two decimal places
+  - Multiplication/Division: results quantized to four decimal places
+
+- **Prompting & parsing**:
+  - Models receive: "Compute the following and reply with just the numeric result (no explanation)"
+  - Responses are parsed via regex and classified as:
+    - `Correct`: exact match to the computed result
+    - `Deviate`: numeric but off – logged with absolute error
+    - `NaN`: non-numeric or parsing failure
+
+- **Trials & depths**:
+  - Default 10 trials per variant/depth combination
+  - Default depths: 2 through 10 digits
+
+- **Outputs**:
+  - Per-trial JSONL written to the configured results directory
+  - A summary record appended to `aggregate.jsonl` at project root
+
 ## Considerations
 - It's reasonable to do a non-strict verification, currently there's strict match of response, yet sometimes models do not follow the rules and can wrap correct replies in some markup (e.g. most of NaN results for `grok-3-mini-beta-high` are actully correct) - a separate metric for format adherence can be tracked
 - Floats are actually decimals - i.e. fixed point math using numbers with 2 decimals after the decimal separator
