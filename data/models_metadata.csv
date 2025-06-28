@@ -4,15 +4,23 @@ claude-v3-5-sonnet-v2,3,15, 2024-10,
 anthropic.claude-3-7-sonnet-20250219-v1:0,3,15, 2025-02,
 claude-3-7-sonnet-20250219,3,15, 2025-02,
 claude-v3-7-sonnet-thinking,3,15, 2025-02,
+claude-v3-7-sonnet-thinking16000,3,15, 2025-05,
+claude-sonnet-3.7-20250219-4k,3,15, 2025-02,
 claude-v3-haiku,0.25,1.25, 2024-03,
 claude-v3-opus,15,75, 2024-03,
 anthropic.claude-v3-5-haiku, 0.8, 4, 2024-10,
 claude-v3-5-haiku, 0.8, 4, 2024-10,
+claude-sonnet-4@20250514, 3, 15, 2025-05
+anthropic.claude-sonnet-4-20250514-v1:0-with-thinking, 3, 15, 2025-05
+claude-opus-4@20250514, 15, 75, 2025-05
+claude-opus-4-20250514-thinking16000, 15, 75, 2025-05
+anthropic.claude-opus-4-20250514-v1:0, 3, 15, 2025-05
 deephermes-3-llama-3-8b-preview@q8, 0.40, 0.60, 2024-07,Assuming AWS price for llama-3-instruct-8b
 deepseek-chat, 0.27, 1.10, 2024-12,
 deepseek-chat-0324, 0.27, 1.10, 2025-03,
 deepseek-reasoner, 0.55, 2.19, 2025-01,
 deepseek-r1, 0.55, 2.19, 2025-01,
+deepseek-r1-4k, 0.55, 2.19, 2025-05,
 deepseek-r1-0528, 0.55, 2.19, 2025-05,
 deepseek-r1-distill-qwen-14b@q8_0, 0.05, 0.2, 2025-01,Assuming Alibiba Qwen-Turbo price divided by 2
 deepseek-r1-distill-qwen-32b@q4_k_m, 0.05, 0.2, 2025-01,Assuming Alibiba Qwen-Turbo price
@@ -59,6 +67,7 @@ o4-mini-2025-04-16-low, 1.1, 4.4, 2025-04,
 o4-mini-2025-04-16-medium-1k, 1.1, 4.4, 2025-04,
 o4-mini-2025-04-16-medium-2k, 1.1, 4.4, 2025-04,
 o4-mini-2025-04-16-medium-4k, 1.1, 4.4, 2025-04,
+o4-mini-2025-04-16-high, 1.1, 4.4, 2025-04,
 granite-3.1-8b-instruct, 0.20, 0.20, 2024-12,Assuming price from IBM watsonx.ai
 grok-2-1212, 2, 10, 2024-08,
 internlm3-8b-instruct, 0.40, 0.60, 2025-01,Assuming AWS price for llama-3-instruct-8b
@@ -97,14 +106,14 @@ xai/grok-3-mini-beta, 0.3, 0.5, 2025-02
 gemini-2.5-flash-preview-04-17, 0.15, 0.60, 2025-03
 gemini-2.5-flash-preview-04-17-thinking, 0.15, 3.50, 2025-04
 gemini-2.5-pro-preview-05-06, 1.25, 10, 2025-05
+gemini-2.5-pro, 1.25, 10, 2025-06
 gemini/gemini-2.5-flash-preview-04-17, 0.15, 0.60, 2025-03
 gemini/gemini-2.5-flash-preview-04-17-thinking, 0.15, 3.50, 2025-04
 gemini/gemini-2.5-pro-preview-05-06, 1.25, 10.0, 2025-05
-claude-sonnet-4@20250514, 3, 15, 2025-05
-anthropic.claude-sonnet-4-20250514-v1:0-with-thinking, 3, 15, 2025-05
-claude-opus-4@20250514, 15, 75, 2025-05
-anthropic.claude-opus-4-20250514-v1:0, 3, 15, 2025-05
+gemini-2.5-flash, 0.15, 0.60, 2025-06
 mistral-medium-2505, 0.4, 2, 2025-05
 magistral-medium-2506, 0.4, 2, 2025-06, Using same price as mistral-medium-2505
 magistral-small-2506, 0.5, 1.5, 2025-06
 codestral-mamba-2407, 0.25 , 0.25, 2024-07
+qwen3-32b@cerebras-thinking, 0.4, 0.8, 2025-05
+qwen3-32b@cerebras, 0.4, 0.8, 2025-05

@@ -2,7 +2,7 @@ import csv
 import json
 
 METADATA_FILE = "data/models_metadata.csv"
-TRIAL_FILE = "results/claude-3-7-sonnet-20250219_2025-05-11_19-06.jsonl"
+TRIAL_FILE = "results/azure_anthropic.claude-3-7-sonnet-20250219-v1:0_2025-05-17_11-46.jsonl"
 
 def load_metadata(metadata_file):
     """Load model pricing metadata from CSV and return dict of model->(prompt_rate, completion_rate)."""
