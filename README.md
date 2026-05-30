@@ -171,7 +171,15 @@ Alternatively, create a `.env` file at the project root with the following conte
 
 ## Usage
 
-Run the evaluation suite with `python run.py`. Get the trials saved under `results/` folder. Use scripts in `scripts/` folder to analyze and visualize the results.
+Run the evaluation suite with `python run.py` (or `uv run run.py`). Trials are saved under `results/`. Use scripts in `scripts/` to analyze and visualize results.
+
+Configure the run via CLI flags or by editing `DEFAULTS` at the top of `run.py`. CLI overrides `.env` for `--model`. Example:
+
+```bash
+uv run run.py --model openai/gpt-4o --model-alias=gpt4o-baseline --trials=5 --depths=2-6
+```
+
+See `uv run run.py --help` for all options (`--reasoning-effort`, `--litellm-params`, `--resume-file`, etc.).
 
 ## Reports & Analysis
 
