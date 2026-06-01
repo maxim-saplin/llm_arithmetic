@@ -184,6 +184,18 @@ uv run run.py --model openai/gpt-4o --model-alias=gpt4o-baseline --trials=5 --de
 
 See `uv run run.py --help` for all options (`--reasoning-effort`, `--litellm-params`, `--resume-file`, etc.).
 
+### Terminal progress
+
+During a run, a tqdm bar on stderr shows trial progress with compact stats (`tok=9.4k $0.0423`) only. The model name appears in the Rich startup table, not on the bar line.
+
+If the bar still garbles (wrapped or spliced lines), widen the terminal or use line-by-line mode:
+
+```bash
+TQDM_DISABLE=1 uv run run.py --model openai/gpt-4o --trials 5 --depths 2-6
+```
+
+On WSL or Cursor’s integrated terminal, reported width can be wrong; an external terminal or `COLUMNS=120` often helps.
+
 ## Reports & Analysis
 
 Each run writes one JSONL file per model under `results/`, with one record per trial

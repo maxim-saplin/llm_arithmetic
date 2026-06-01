@@ -175,7 +175,7 @@ grok-4-fast-reasoning, 0.20, 0.50, 2025-07,reasoning,xAI official pricing
 grok-4-1-fast-non-reasoning, 0.20, 0.50, 2025-11,not_reasoning,xAI official pricing
 grok-4-1-fast-reasoning, 0.20, 0.50, 2025-11,reasoning,xAI official pricing
 k2-think@iq4_xs,0.15,0.2,2025-09,reasoning, Assuming Deepinfra price for Qwen3 32B
-kimi-k2.5, 0.60, 2.50, 2026-01,reasoning,Closest public pricing found was Azure Kimi K2 Thinking Global
+kimi-k2.5, 0.60, 3.00, 2026-01,reasoning,Moonshot Kimi platform official pricing for K2.5
 glm-4.7-flash@q4,0.05,0.1,2026-01,reasoning, Assuming DeepInfra price for Qwen3 32B
 lvl-1_vs_3x-o4-mini-2025-04-16-low_o4-mini-2025-04-16-medium, 1.1, 4.4, 2025-04,unknown,
 lvl-1_vs_5x-o4-mini-2025-04-16-low_o4-mini-2025-04-16-medium, 1.1, 4.4, 2025-04,unknown,
@@ -264,9 +264,18 @@ zai.glm-5, 1.00, 3.20, 2026-02,reasoning,Z.ai official pricing (thinking mode on
 amazon.nova-premier, 2.50, 12.50, 2025-10,reasoning,AWS Bedrock public price list for Amazon Nova Premier
 claude-opus-4-7@default, 5, 25, 2026-04,unknown,Anthropic official pricing; default adaptive-thinking behavior ambiguous in Google Cloud logs
 claude-opus-4-7_adaptive-thinking-high, 5, 25, 2026-04,reasoning,Anthropic official pricing for Claude Opus 4.7 adaptive thinking
+claude-opus-4-8_adaptive-thinking-high, 5, 25, 2026-05,reasoning,Anthropic official pricing for Claude Opus 4.8 adaptive thinking
+gemini-3.5-flash, 1.50, 9.00, 2026-05,reasoning,Google official pricing (thinking tokens billed as output)
+nvidia.nemotron-nano-12b-v2, 0.20, 0.60, 2025-10,not_reasoning,AWS Bedrock Nemotron Nano 2 VL price list
+nvidia.nemotron-super-3-120b, 0.15, 0.65, 2026-03,reasoning,AWS Bedrock Nemotron 3 Super 120B A12B price list
+magistral-small-2509, 0.50, 1.50, 2025-09,reasoning,Mistral official Magistral Small 1.2 (2509) pricing
+mistral.magistral-small-2509, 0.50, 1.50, 2025-09,reasoning,Same as magistral-small-2509; Azure Foundry deployment id
+gpt-5.4-nano-low, 0.20, 1.25, 2026-03,reasoning,OpenAI official pricing for GPT-5.4 nano
+gpt-5.4-nano-medium, 0.20, 1.25, 2026-03,reasoning,OpenAI official pricing for GPT-5.4 nano
 meta.llama4-scout-17b-instruct-v1:0, 0.17, 0.66, 2025-04,not_reasoning,AWS Bedrock public price list for Meta Llama 4 Scout 17B
 qwen3.6-27b, 0.29, 3.20, 2026-04,reasoning,OpenRouter headline pricing for qwen/qwen3.6-27b (May 2026); Alibaba Bailian list $0.42/$2.52
 qwen3.6-27b@q4_k_s, 0.29, 3.20, 2026-04,reasoning,Local quantized; API-equivalent from OpenRouter qwen/qwen3.6-27b ($0.29/$3.20 per 1M)
+qwen3.6-27b@q4_k_m, 0.29, 3.20, 2026-04,reasoning,Local quantized; API-equivalent from OpenRouter qwen/qwen3.6-27b ($0.29/$3.20 per 1M)
 qwen3.6-27b-mtp@q4_k_s, 0.29, 3.20, 2026-04,reasoning,Local quantized; API-equivalent from OpenRouter qwen/qwen3.6-27b ($0.29/$3.20 per 1M)
 qwen3.6-35b-a3b, 0.14, 1.00, 2026-04,reasoning,OpenRouter headline pricing for qwen/qwen3.6-35b-a3b (May 2026); Alibaba Bailian list $0.26/$1.56
 DeepSeek-R1-Distill-Llama-70B-FP8, 0.23, 0.4, 2024-01,reasoning, DeepInfra price for LLama 3 70B
@@ -284,6 +293,7 @@ deepseek-r1-4k, 0.55, 2.19, 2025-05,reasoning,
 gemini-1.5-pro-preview-0409, 3.50, 10.50, 2024-04,not_reasoning,Assumign price for gemini-1.5-pro
 gemini-2.0-flash-lite-preview-02-05, 0.075, 0.30, 2025-02,not_reasoning,Assuming price for gemini-2.0-flash-lite-001
 gemini-2.5-flash-preview-04-17, 0.15, 0.60, 2025-03,not_reasoning,
+gemini-2.5-flash-preview-04-17-no-thinking, 0.15, 0.60, 2025-03,not_reasoning,Same as gemini-2.5-flash-preview-04-17
 gemini-2.5-flash-preview-04-17-thinking, 0.15, 3.50, 2025-04,reasoning,
 gemini/gemini-2.5-flash-preview-04-17, 0.15, 0.60, 2025-03,not_reasoning,
 gemini/gemini-2.5-flash-preview-04-17-thinking, 0.15, 3.50, 2025-04,reasoning,
