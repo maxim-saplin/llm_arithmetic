@@ -30,6 +30,7 @@ claude-opus-4-6_thinking-high, 5, 25, 2026-02,reasoning,Anthropic official prici
 claude-sonnet-4-6_thinking-high, 3, 15, 2026-02,reasoning,Anthropic official pricing for Claude Sonnet 4.6
 deephermes-3-llama-3-8b-preview@q8, 0.40, 0.60, 2024-07,not_reasoning,Assuming AWS price for llama-3-instruct-8b
 deepseek-V3.2_non-reasoning, 0.28, 0.42, 2025-12,not_reasoning,DeepSeek official API pricing for V3.2 cache-miss input
+deepseek.v3.2, 0.28, 0.42, 2025-12,not_reasoning,Azure alias: azure/deepseek.v3.2
 DeepSeek-V3.2-Speciale, 0.28, 0.42, 2025-12,reasoning,DeepSeek official release says same pricing as V3.2
 deepseek-chat, 0.27, 1.10, 2024-12,not_reasoning,
 deepseek-v3-0324,0.27, 1.10, 2024-12,not_reasoning,
@@ -257,8 +258,8 @@ gpt-5.4-mini-medium, 0.75, 4.50, 2026-03,reasoning,OpenAI official pricing for G
 gpt-5.4-nano-high, 0.20, 1.25, 2026-03,reasoning,OpenAI official pricing for GPT-5.4 nano
 grok-4-20-non-reasoning, 2.00, 6.00, 2026-03,not_reasoning,xAI official pricing
 grok-4-20-reasoning, 2.00, 6.00, 2026-03,reasoning,xAI official pricing
-minimax.minimax-m2.1, 0.3, 1.2, 2025-12,not_reasoning,MiniMax official pay-as-you-go pricing (platform.minimax.io); interleaved thinking (same convention as minimax-m2)
-minimax.minimax-m2.5, 0.3, 1.2, 2026-02,not_reasoning,MiniMax official pay-as-you-go pricing (platform.minimax.io); interleaved thinking
+minimax-m2.1, 0.3, 1.2, 2025-12,not_reasoning,MiniMax official pay-as-you-go pricing (platform.minimax.io); interleaved thinking (same convention as minimax-m2)
+minimax-m2.5, 0.3, 1.2, 2026-02,not_reasoning,MiniMax official pay-as-you-go pricing (platform.minimax.io); interleaved thinking
 qwen3.5-9b@q8_0,,,2026-03,not_reasoning,Local quantized model
 zai.glm-5, 1.00, 3.20, 2026-02,reasoning,Z.ai official pricing (thinking mode on by default)
 amazon.nova-premier, 2.50, 12.50, 2025-10,reasoning,AWS Bedrock public price list for Amazon Nova Premier
@@ -266,13 +267,12 @@ claude-opus-4-7@default, 5, 25, 2026-04,unknown,Anthropic official pricing; defa
 claude-opus-4-7_adaptive-thinking-high, 5, 25, 2026-04,reasoning,Anthropic official pricing for Claude Opus 4.7 adaptive thinking
 claude-opus-4-8_adaptive-thinking-high, 5, 25, 2026-05,reasoning,Anthropic official pricing for Claude Opus 4.8 adaptive thinking
 gemini-3.5-flash, 1.50, 9.00, 2026-05,reasoning,Google official pricing (thinking tokens billed as output)
-nvidia.nemotron-nano-12b-v2, 0.20, 0.60, 2025-10,not_reasoning,AWS Bedrock Nemotron Nano 2 VL price list
-nvidia.nemotron-super-3-120b, 0.15, 0.65, 2026-03,reasoning,AWS Bedrock Nemotron 3 Super 120B A12B price list
+nemotron-nano-12b-v2, 0.20, 0.60, 2025-10,not_reasoning,AWS Bedrock Nemotron Nano 2 VL price list
+nemotron-super-3-120b, 0.15, 0.65, 2026-03,reasoning,AWS Bedrock Nemotron 3 Super 120B A12B price list
 magistral-small-2509, 0.50, 1.50, 2025-09,reasoning,Mistral official Magistral Small 1.2 (2509) pricing
-mistral.magistral-small-2509, 0.50, 1.50, 2025-09,reasoning,Same as magistral-small-2509; Azure Foundry deployment id
 gpt-5.4-nano-low, 0.20, 1.25, 2026-03,reasoning,OpenAI official pricing for GPT-5.4 nano
 gpt-5.4-nano-medium, 0.20, 1.25, 2026-03,reasoning,OpenAI official pricing for GPT-5.4 nano
-meta.llama4-scout-17b-instruct-v1:0, 0.17, 0.66, 2025-04,not_reasoning,AWS Bedrock public price list for Meta Llama 4 Scout 17B
+llama4-scout-17b-instruct-v1:0, 0.17, 0.66, 2025-04,not_reasoning,AWS Bedrock public price list for Meta Llama 4 Scout 17B
 qwen3.6-27b, 0.29, 3.20, 2026-04,reasoning,OpenRouter headline pricing for qwen/qwen3.6-27b (May 2026); Alibaba Bailian list $0.42/$2.52
 qwen3.6-27b@q4_k_s, 0.29, 3.20, 2026-04,reasoning,Local quantized; API-equivalent from OpenRouter qwen/qwen3.6-27b ($0.29/$3.20 per 1M)
 qwen3.6-27b@q4_k_m, 0.29, 3.20, 2026-04,reasoning,Local quantized; API-equivalent from OpenRouter qwen/qwen3.6-27b ($0.29/$3.20 per 1M)
