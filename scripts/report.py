@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import json
+import math
 import os
 from rich.console import Console
 from rich.table import Table
@@ -19,6 +20,38 @@ SORT_BY = SortBy.MODEL
 MODEL = None  # Model name to filter (string) or None for last record
 RESULTS_DIR = os.path.join(os.getcwd(), "results")
 MIN_DEPTH = 5  # Minimum digit depth to include in report (integer) or None to include all
+
+def format_number(val):
+    """Format a number; use scientific notation (4 decimals) when it has more than 10 digits."""
+    if val is None or val == '':
+        return str(val)
+    try:
+        n = float(val)
+    except (TypeError, ValueError):
+        return str(val)
+    if not math.isfinite(n):
+        return str(n)
+    digit_count = len(str(int(abs(n)))) if n != 0 else 1
+    if digit_count > 10:
+        return f"{n:.4e}"
+    if n == int(n):
+        return f"{int(n):,}"
+    return str(n)
+
+def format_percent(val, decimals=2):
+    """Format a ratio as a percentage; use scientific notation when result exceeds 10 digits."""
+    pct = float(val) * 100
+    if not math.isfinite(pct):
+        return f"{pct}%"
+    if pct == 0:
+        return f"{pct:.{decimals}f}%"
+    try:
+        digit_count = len(str(int(abs(pct))))
+    except OverflowError:
+        return f"{pct:.4e}%"
+    if digit_count > 10:
+        return f"{pct:.4e}%"
+    return f"{pct:.{decimals}f}%"
 
 def load_results():
     """
@@ -233,14 +266,14 @@ def main():
             table.add_row(
                 r.get('model', ''),
                 # r.get('date', ''),
-                str(o.get('total_trials', '')),
-                f"{o.get('accuracy',0)*100:.2f}%",
-                f"{o.get('nan_rate',0)*100:.4f}%",
-                f"{o.get('deviate_rate',0)*100:.2f}%",
-                f"{int(o.get('total_completion_tokens',0)):,}",
+                format_number(o.get('total_trials', '')),
+                format_percent(o.get('accuracy', 0)),
+                format_percent(o.get('nan_rate', 0), decimals=4),
+                format_percent(o.get('deviate_rate', 0)),
+                format_number(o.get('total_completion_tokens', 0)),
                 f"${o.get('total_cost',0):.4f}",
-                f"{o.get('avg_error',0)*100:.4f}%",
-                f"{o.get('general_avg_error',0)*100:.4f}%"
+                format_percent(o.get('avg_error', 0), decimals=4),
+                format_percent(o.get('general_avg_error', 0), decimals=4),
             )
         console.print(table)
         # Verification table: count per‐variant trials and check consistency
@@ -259,8 +292,8 @@ def main():
             cells = rec.get('cells', {})
             # total trials per category
             counts = [
-                str(sum(stats.get('total_trials', 0)
-                        for stats in cells.get(cat, {}).values()))
+                format_number(sum(stats.get('total_trials', 0)
+                                  for stats in cells.get(cat, {}).values()))
                 for cat in categories
             ]
             # valid if all counts equal
@@ -285,11 +318,12 @@ def main():
                     continue
                 val = overall[key]
                 if key in ('accuracy', 'nan_rate', 'deviate_rate', 'avg_error', 'general_avg_error'):
-                    val_str = f"{val*100:.2f}%"
+                    decimals = 4 if key in ('nan_rate', 'avg_error', 'general_avg_error') else 2
+                    val_str = format_percent(val, decimals=decimals)
                 elif 'cost' in key:
                     val_str = f"${val:.6f}"
                 else:
-                    val_str = str(val)
+                    val_str = format_number(val)
                 overall_lines.append(f"[bold]{key.replace('_', ' ').title()}: [/bold]{val_str}")
             panel = Panel("\n".join(overall_lines), title=f"Overall ({record.get('model')} @ {record.get('date')})")
             console.print(panel)
@@ -307,12 +341,12 @@ def main():
                 for variant, stats in per_cat.items():
                     detail_table.add_row(
                         variant,
-                        str(stats.get('total_trials', '')),
-                        f"{stats.get('accuracy',0)*100:.2f}%",
-                        f"{stats.get('nan_rate',0)*100:.2f}%",
-                        f"{stats.get('deviate_rate',0)*100:.2f}%",
-                        f"{stats.get('avg_error',0)*100:.2f}%",
-                        f"{stats.get('general_avg_error',0)*100:.2f}%",
+                        format_number(stats.get('total_trials', '')),
+                        format_percent(stats.get('accuracy', 0)),
+                        format_percent(stats.get('nan_rate', 0)),
+                        format_percent(stats.get('deviate_rate', 0)),
+                        format_percent(stats.get('avg_error', 0)),
+                        format_percent(stats.get('general_avg_error', 0)),
                         f"${stats.get('total_cost',0):.6f}"
                     )
                 console.print(detail_table)
@@ -338,11 +372,12 @@ def main():
             continue
         val = overall[key]
         if key in ('accuracy', 'nan_rate', 'deviate_rate', 'avg_error', 'general_avg_error'):
-            val_str = f"{val*100:.2f}%"
+            decimals = 4 if key in ('nan_rate', 'avg_error', 'general_avg_error') else 2
+            val_str = format_percent(val, decimals=decimals)
         elif 'cost' in key:
             val_str = f"${val:.6f}"
         else:
-            val_str = str(val)
+            val_str = format_number(val)
         overall_lines.append(f"[bold]{key.replace('_', ' ').title()}: [/bold]{val_str}")
     panel = Panel("\n".join(overall_lines), title=f"Overall ({record.get('model')} @ {record.get('date')})")
     console.print(panel)
@@ -361,12 +396,12 @@ def main():
         for variant, stats in per_cat.items():
             table.add_row(
                 variant,
-                str(stats.get('total_trials', '')),
-                f"{stats.get('accuracy',0)*100:.2f}%",
-                f"{stats.get('nan_rate',0)*100:.2f}%",
-                f"{stats.get('deviate_rate',0)*100:.2f}%",
-                f"{stats.get('avg_error',0)*100:.2f}%",
-                f"{stats.get('general_avg_error',0)*100:.2f}%",
+                format_number(stats.get('total_trials', '')),
+                format_percent(stats.get('accuracy', 0)),
+                format_percent(stats.get('nan_rate', 0)),
+                format_percent(stats.get('deviate_rate', 0)),
+                format_percent(stats.get('avg_error', 0)),
+                format_percent(stats.get('general_avg_error', 0)),
                 f"${stats.get('total_cost',0):.6f}"
             )
         console.print(table)
